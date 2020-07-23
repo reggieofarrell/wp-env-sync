@@ -24,6 +24,10 @@ add these things to your composer.json file...
    "post-install-cmd": [
       "cp ./vendor/reggieofarrell/wp-env-sync/rsync-excludes.txt ./",
       "cp ./vendor/reggieofarrell/wp-env-sync/sync-prod.sh ./"
+   ],
+   "post-update-cmd": [
+      "cp ./vendor/reggieofarrell/wp-env-sync/rsync-excludes.txt ./",
+      "cp ./vendor/reggieofarrell/wp-env-sync/sync-prod.sh ./"
    ]
 }
 ```
