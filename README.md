@@ -8,8 +8,30 @@ It assumes a few things...
    that you don't want synced from the remote for this specific environment
 3. The .env file and, if applicable, the additional-rsync-excludes.txt file and sync-prod-ext.sh
    files are gitignored
+4. If using composer, your composer.json file is in the wp root
+   
+### Install (if using composer)
+add these things to your composer.json file...
 
-Usage:
+```json
+"repositories": [
+    {
+      "type": "vcs",
+      "url": "git@github.com:reggieofarrell/wp-env-sync.git"
+    }
+],
+"scripts": {
+   "post-install-cmd": [
+      "cp ./vendor/reggieofarrell/wp-env-sync/rsync-excludes.txt ./",
+      "cp ./vendor/reggieofarrell/wp-env-sync/sync-prod.sh ./"
+   ]
+}
+```
+then run...
+
+`composer require reggieofarrell/wp-env-sync`
+
+### Usage
 1. Setup your .env file (see below)
 2. Add any necessary additional rsync exclues not already in rsync-excludes.txt for 
    this environment to a file named additional-rsync-excludes.txt
@@ -17,7 +39,7 @@ Usage:
 4. Run script (bash sync-prod.sh)
 
 ## .env file variables
-You should have a `.env` file in the root of the wp project with all of these defined...
+You should have a `.env` file in the root of the wp project with all of these defined.  Values are just examples...
 
 ###### locaion of your ssh key for the remote server
 `SSH_KEY_PATH=~/.ssh/id_rsa`
