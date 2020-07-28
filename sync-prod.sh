@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# WP Sync Script v1
+# WP Env Sync Script
 # Author: Reggie O'Farrell | Casadega Development
 #
 # This script syncs the untracked files and database from the production server.
@@ -98,6 +98,9 @@ rm -r ./wp-content/cache
 
 echo "clearing transients"
 wp transient delete --all
+
+echo "discourage search engines from indexing"
+wp option set blog_public 0
 
 if [ -f "sync-prod-ext.sh" ]
 then

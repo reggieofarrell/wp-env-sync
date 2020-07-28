@@ -18,4 +18,3 @@
 - rsync-excludes.txt
 - additional-rsync-excludes.txt
 - wp-cli.yml
-- wp-sentry-integration
