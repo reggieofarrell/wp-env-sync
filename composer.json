@@ -1,6 +1,6 @@
 {
-    "name": "reggieofarrell/wp-env-sync",
-    "description": "syncs the untracked files and database from the wp production server to staging or local",
-    "type": "library",
-    "require": {}
+  "name": "reggieofarrell/wp-env-sync",
+  "description": "syncs the untracked files and database from the wp production server to staging or local",
+  "type": "library",
+  "require": {}
 }

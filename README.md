@@ -65,3 +65,7 @@ You should have a `.env` file in the root of the wp project with all of these de
 `REMOTE_ENV=prod`
 ###### local env being synced to ['local', 'staging']
 `LOCAL_ENV=local`
+###### local mysql version
+`LOCAL_MYSQL_VER=5.7`
+###### remote mysql version
+`REMOTE_MYSQL_VER=5.7`

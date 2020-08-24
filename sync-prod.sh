@@ -15,7 +15,7 @@
 #
 # Instructions:
 # 1. Setup your .env file
-# 2. Add any necessary additional rsync exclues not already in rsync-excludes.txt for 
+# 2. Add any necessary additional rsync exclues not already in rsync-excludes.txt for
 #    this env to a file named additional-rsync-excludes.txt
 # 3. Add any additional shell commands to run at the end of the script to a file name sync-prod-ext.sh
 # 4. Run script (bash sync-prod.sh)
@@ -28,7 +28,7 @@ fi
 
 START=$(date +%s)
 
-# import variables from .env.sync-prod file 
+# import variables from .env.sync-prod file
 set -o allexport
 source .env
 set +o allexport
@@ -39,7 +39,7 @@ then rsync --progress --exclude-from='rsync-excludes.txt' --exclude-from='additi
 else rsync --progress --exclude-from='rsync-excludes.txt' --delete -avzhe "ssh -i $SSH_KEY_PATH" $SSH_USER:~/$REMOTE_PATH/ ./
 fi
 
-if [ $LOCAL_ENV = "staging" ] 
+if [ $LOCAL_ENV = "staging" ]
 then
   echo "Ensuring permissions..."
   find ./ -type f -exec chmod 644 {} +
@@ -70,6 +70,13 @@ fi
 echo "Clearing local db..."
 wp db reset --yes
 
+# fix for remote environments on mysql 5.8 with local environment on 5.7
+if [ $LOCAL_MYSQL_VER = 5.7 ] && [ $REMOTE_MYSQL_VER = 5.8 ] && [ $LOCAL_ENV = 'local' ]
+then
+  echo "Reformatting MySQL 5.8 db export for MySQL 5.7..."
+  sed -i '' -e 's/utf8mb4_0900_ai_ci/utf8mb4_unicode_520_ci/g' ${REMOTE_ENV}_db_${START}.sql
+fi
+
 echo "Importing DB to local..."
 wp db import ./${REMOTE_ENV}_db_${START}.sql
 
@@ -77,7 +84,7 @@ echo "Running search-replace on url's..."
 wp search-replace //$REMOTE_DOMAIN //$LOCAL_DOMAIN --all-tables  --skip-columns=guid --precise
 wp search-replace $FULL_REMOTE_PATH $PWD --all-tables  --skip-columns=guid --precise
 
-if [ $REMOTE_ENV_IS_HTTPS = true ] && [ $LOCAL_ENV_IS_HTTPS = false ] 
+if [ $REMOTE_ENV_IS_HTTPS = true ] && [ $LOCAL_ENV_IS_HTTPS = false ]
 then
 # make sure all https domain references are changed to http
 echo "Changing https references to http..."
