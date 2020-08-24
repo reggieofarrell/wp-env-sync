@@ -17,4 +17,7 @@
 - sync-stage-ext.sh
 - rsync-excludes.txt
 - additional-rsync-excludes.txt
+- /composer.json
+- /composer.lock
+- /vendor
 - wp-cli.yml
