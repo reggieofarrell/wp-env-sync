@@ -9,7 +9,7 @@ It assumes a few things...
 3. The .env file and, if applicable, the additional-rsync-excludes.txt file and sync-prod-ext.sh
    files are gitignored
 4. If using composer, your composer.json file is in the wp root
-   
+
 ### Install (if using composer)
 add these things to your composer.json file...
 
@@ -37,7 +37,7 @@ then run...
 
 ### Usage
 1. Setup your .env file (see below)
-2. Add any necessary additional rsync exclues not already in rsync-excludes.txt for 
+2. Add any necessary additional rsync exclues not already in rsync-excludes.txt for
    this environment to a file named additional-rsync-excludes.txt
 3. Add any additional shell commands to run at the end of the script to a file name sync-prod-ext.sh
 4. Run script (bash sync-prod.sh)
@@ -68,4 +68,4 @@ You should have a `.env` file in the root of the wp project with all of these de
 ###### local mysql version
 `LOCAL_MYSQL_VER=5.7`
 ###### remote mysql version
-`REMOTE_MYSQL_VER=5.7`
+`REMOTE_MYSQL_VER=8.0`

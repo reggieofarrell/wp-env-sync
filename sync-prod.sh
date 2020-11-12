@@ -33,6 +33,11 @@ set -o allexport
 source .env
 set +o allexport
 
+# bail if not on staging or local
+if [ $LOCAL_ENV != "staging" ] && [ $LOCAL_ENV != "local" ]
+then echo "Error: environment is not staging or local"; exit 1
+fi
+
 echo "Syncing all untracked files from prod..."
 if [ -f "additional-rsync-excludes.txt" ]
 then rsync --progress --exclude-from='rsync-excludes.txt' --exclude-from='additional-rsync-excludes.txt' --delete -avzhe "ssh -i $SSH_KEY_PATH" $SSH_USER:~/$REMOTE_PATH/ ./
@@ -70,10 +75,10 @@ fi
 echo "Clearing local db..."
 wp db reset --yes
 
-# fix for remote environments on mysql 5.8 with local environment on 5.7
-if [ $LOCAL_MYSQL_VER = 5.7 ] && [ $REMOTE_MYSQL_VER = 5.8 ] && [ $LOCAL_ENV = 'local' ]
+# fix for remote environments on mysql 8.0 with local environment on 5.7
+if [ $LOCAL_MYSQL_VER = 5.7 ] && [ $REMOTE_MYSQL_VER = 8.0 ]
 then
-  echo "Reformatting MySQL 5.8 db export for MySQL 5.7..."
+  echo "Reformatting MySQL 8.0 db export for MySQL 5.7..."
   sed -i '' -e 's/utf8mb4_0900_ai_ci/utf8mb4_unicode_520_ci/g' ${REMOTE_ENV}_db_${START}.sql
 fi
 
