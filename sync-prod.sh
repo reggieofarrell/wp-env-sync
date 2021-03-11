@@ -20,7 +20,7 @@
 # 3. Add any additional shell commands to run at the end of the script to a file name sync-prod-ext.sh
 # 4. Run script (bash sync-prod.sh)
 #
-# Note: the --no-links flag is used with rsync so that if there are any symlinks in the remote, those
+# Note: the --copy-links flag is used with rsync so that if there are any symlinks in the remote, those
 #       files will be copied into an actual directory at the correct location.  No symlinks will be created locally
 #
 
@@ -43,8 +43,8 @@ fi
 
 echo "Syncing all untracked files from prod..."
 if [ -f "additional-rsync-excludes.txt" ]
-then rsync --progress --exclude-from='rsync-excludes.txt' --exclude-from='additional-rsync-excludes.txt' --delete --no-links -avzhe "ssh -i $SSH_KEY_PATH" $SSH_USER:~/$REMOTE_PATH/ ./
-else rsync --progress --exclude-from='rsync-excludes.txt' --delete --no-links -avzhe "ssh -i $SSH_KEY_PATH" $SSH_USER:~/$REMOTE_PATH/ ./
+then rsync --progress --exclude-from='rsync-excludes.txt' --exclude-from='additional-rsync-excludes.txt' --delete --copy-links -avzhe "ssh -i $SSH_KEY_PATH" $SSH_USER:~/$REMOTE_PATH/ ./
+else rsync --progress --exclude-from='rsync-excludes.txt' --delete --copy-links -avzhe "ssh -i $SSH_KEY_PATH" $SSH_USER:~/$REMOTE_PATH/ ./
 fi
 
 if [ $LOCAL_ENV = "staging" ]
