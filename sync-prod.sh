@@ -10,11 +10,11 @@
 # 2. You have ssh access to the server and the server has WP CLI installed
 # 3. You have added an additional-rsync-excludes.txt file to reflect any files and/or folders
 #    that you don't want synced from the remote for this specific environment
-# 4. The .env file and, if applicable, the additional-rsync-excludes.txt file and sync-prod-ext.sh
+# 4. The .env.wpenvsync file and, if applicable, the additional-rsync-excludes.txt file and sync-prod-ext.sh
 #    files are gitignored
 #
 # Instructions:
-# 1. Setup your .env file
+# 1. Setup your .env.wpenvsync file
 # 2. Add any necessary additional rsync exclues not already in rsync-excludes.txt for
 #    this env to a file named additional-rsync-excludes.txt
 # 3. Add any additional shell commands to run at the end of the script to a file name sync-prod-ext.sh
@@ -24,16 +24,16 @@
 #       files will be copied into an actual directory at the correct location.  No symlinks will be created locally
 #
 
-if [ -f ".env" ]
+if [ -f ".env.wpenvsync" ]
 then echo "Starting sync script..."
-else echo "Error: .env file not found, exiting..."; exit 1
+else echo "Error: .env.wpenvsync file not found, exiting..."; exit 1
 fi
 
 START=$(date +%s)
 
-# import variables from .env.sync-prod file
+# import variables from .env.wpenvsync file
 set -o allexport
-source .env
+source .env.wpenvsync
 set +o allexport
 
 # bail if not on staging or local
