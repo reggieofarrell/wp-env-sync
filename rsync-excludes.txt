@@ -11,6 +11,9 @@
 - object-cache.php
 - advanced-cache.php
 - .env
+- .env.development
+- .env.production
+- .env.wpenvsync
 - sync-prod.sh
 - sync-prod-ext.sh
 - sync-stage.sh
