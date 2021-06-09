@@ -41,11 +41,40 @@ if [ $LOCAL_ENV != "staging" ] && [ $LOCAL_ENV != "local" ]
 then echo "Error: environment is not staging or local"; exit 1
 fi
 
-echo "Syncing all untracked files from prod..."
-if [ -f "additional-rsync-excludes.txt" ]
-then rsync --progress --exclude-from='rsync-excludes.txt' --exclude-from='additional-rsync-excludes.txt' --delete --copy-links -avzhe "ssh -i $SSH_KEY_PATH" $SSH_USER:~/$REMOTE_PATH/ ./
-else rsync --progress --exclude-from='rsync-excludes.txt' --delete --copy-links -avzhe "ssh -i $SSH_KEY_PATH" $SSH_USER:~/$REMOTE_PATH/ ./
+if ! [ -f "additional-rsync-excludes.txt" ]
+then touch additional-rsync-excludes.txt
 fi
+
+echo "Syncing files from production..."
+rsync --progress --exclude-from='additional-rsync-excludes.txt' \
+--exclude 'wp-content/uploads/wp-migrate-db/' \
+--exclude 'wp-content/cache/' \
+--exclude 'wp-content/et-cache/' \
+--exclude '.git' \
+--exclude '.gitignore' \
+--exclude '.github' \
+--exclude 'gitdeploy.php' \
+--exclude 'ShortpixelBackups' \
+--exclude 'wp-config.php' \
+--exclude '.htaccess' \
+--exclude '*.log' \
+--exclude 'object-cache.php' \
+--exclude 'advanced-cache.php' \
+--exclude '.env' \
+--exclude '.env.development' \
+--exclude '.env.production' \
+--exclude '.env.wpenvsync' \
+--exclude 'sync-prod.sh' \
+--exclude 'sync-prod-ext.sh' \
+--exclude 'sync-stage.sh' \
+--exclude 'sync-stage-ext.sh' \
+--exclude 'rsync-excludes.txt' \
+--exclude 'additional-rsync-excludes.txt' \
+--exclude '/composer.json' \
+--exclude '/composer.lock' \
+--exclude '/vendor' \
+--exclude 'wp-cli.yml' \
+--delete --copy-links -avzhe "ssh -i $SSH_KEY_PATH" $SSH_USER:~/$REMOTE_PATH/ ./
 
 if [ $LOCAL_ENV = "staging" ]
 then

@@ -36,8 +36,8 @@ then run...
 `composer require reggieofarrell/wp-env-sync`
 
 ### Usage
-1. Setup your .env file (see below)
-2. Add any necessary additional rsync exclues not already in rsync-excludes.txt for
+1. Setup your .env.wpenvsync file (see below)
+2. Add any necessary additional rsync exclues not already in sync-prod.sh for
    this environment to a file named additional-rsync-excludes.txt
 3. Add any additional shell commands to run at the end of the script to a file name sync-prod-ext.sh
 4. Run script (bash sync-prod.sh)
