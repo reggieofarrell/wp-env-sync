@@ -6,7 +6,7 @@ It assumes a few things...
 1. You have ssh access between the local and remote machines and they both have WP CLI installed globally
 2. You have added an additional-rsync-excludes.txt file to reflect any files and/or folders
    that you don't want synced from the remote for this specific environment
-3. The .env file and, if applicable, the additional-rsync-excludes.txt file and sync-prod-ext.sh
+3. The .env.wpenvsync file and, if applicable, the additional-rsync-excludes.txt file and sync-prod-ext.sh
    files are gitignored
 4. If using composer, your composer.json file is in the wp root
 
@@ -22,11 +22,9 @@ add these things to your composer.json file...
 ],
 "scripts": {
    "post-install-cmd": [
-      "cp ./vendor/reggieofarrell/wp-env-sync/rsync-excludes.txt ./",
       "cp ./vendor/reggieofarrell/wp-env-sync/sync-prod.sh ./"
    ],
    "post-update-cmd": [
-      "cp ./vendor/reggieofarrell/wp-env-sync/rsync-excludes.txt ./",
       "cp ./vendor/reggieofarrell/wp-env-sync/sync-prod.sh ./"
    ]
 }
