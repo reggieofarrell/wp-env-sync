@@ -8,16 +8,15 @@
 #
 # 1. You have WP CLI installed globally on this machine
 # 2. You have ssh access to the server and the server has WP CLI installed
-# 3. You have added an additional-rsync-excludes.txt file to reflect any files and/or folders
+# 3. You have added an additional-rsync-excludes-local.txt or additional-rsync-excludes-staging.txt file to reflect any files and/or folders
 #    that you don't want synced from the remote for this specific environment
-# 4. The .env.wpenvsync file and, if applicable, the additional-rsync-excludes.txt file and sync-prod-ext.sh
-#    files are gitignored
+# 4. The .env.wpenvsync file and the additional-rsync-excludes-local.txt and additional-rsync-excludes-staging.txt files files are gitignored
 #
 # Instructions:
 # 1. Setup your .env.wpenvsync file
-# 2. Add any necessary additional rsync exclues not already in rsync-excludes.txt for
-#    this env to a file named additional-rsync-excludes.txt
-# 3. Add any additional shell commands to run at the end of the script to a file name sync-prod-ext.sh
+# 2. Add any necessary additional rsync exclues not already in this script for
+#    this env to a file named additional-rsync-excludes-{$LOCAL_ENV}.txt
+# 3. Add any additional shell commands to run at the end of the script to a file name sync-prod-ext-local.sh and sync-prod-ext-staging.sh
 # 4. Run script (bash sync-prod.sh)
 #
 # Note: the --copy-links flag is used with rsync so that if there are any symlinks in the remote, those
@@ -41,12 +40,29 @@ if [ $LOCAL_ENV != "staging" ] && [ $LOCAL_ENV != "local" ]
 then echo "Error: environment is not staging or local"; exit 1
 fi
 
-if ! [ -f "additional-rsync-excludes.txt" ]
-then touch additional-rsync-excludes.txt
+if ! [ -f "additional-rsync-excludes-local.txt" ] && [ $LOCAL_ENV = "local" ]
+then echo "Error: additional-rsync-excludes-local.txt file is required for env 'local'"; exit 1
+fi
+
+if ! [ -f "additional-rsync-excludes-staging.txt" ] && [ $LOCAL_ENV = "staging" ]
+then echo "Error: additional-rsync-excludes-staging.txt file is required for env 'staging'"; exit 1
+fi
+
+if [ $LOCAL_ENV = 'local' ]
+then RSYNC_EXCLUDES = "additional-rsync-excludes-local.txt"
+fi
+
+if [ $LOCAL_ENV = 'staging' ]
+then RSYNC_EXCLUDES = "additional-rsync-excludes-staging.txt"
+fi
+
+# allow overriding additional-rsync-excludes-local.txt
+if [ -f "additional-rsync-excludes-local-override.txt" ] && [ $LOCAL_ENV = "local" ]
+then RSYNC_EXCLUDES = "additional-rsync-excludes-local-override.txt"
 fi
 
 echo "Syncing files from production..."
-rsync --progress --exclude-from='additional-rsync-excludes.txt' \
+rsync --progress --exclude-from="$RSYNC_EXCLUDES" \
 --exclude 'wp-content/uploads/wp-migrate-db/' \
 --exclude 'wp-content/cache/' \
 --exclude 'wp-content/et-cache/' \
@@ -100,11 +116,11 @@ gunzip ./${REMOTE_ENV}_db_${START}.sql.gz
 
 if [ $LOCAL_ENV = 'local' ]
 then
-echo "Backing up local db..."
+echo "Backing up the database..."
 wp db export ./_db.sql
 fi
 
-echo "Clearing local db..."
+echo "Clearing the database..."
 wp db reset --yes
 
 # fix for remote environments on mysql 8.0 with local environment on 5.7
@@ -114,7 +130,7 @@ then
   sed -i '' -e 's/utf8mb4_0900_ai_ci/utf8mb4_unicode_520_ci/g' ${REMOTE_ENV}_db_${START}.sql
 fi
 
-echo "Importing DB to local..."
+echo "Importing production database..."
 wp db import ./${REMOTE_ENV}_db_${START}.sql
 
 echo "Running search-replace on url's..."
@@ -146,6 +162,19 @@ wp transient delete --all
 echo "discourage search engines from indexing"
 wp option set blog_public 0
 
+if [ -f "sync-prod-ext-staging.sh" ] && [ $LOCAL_ENV = 'staging' ]
+then
+echo "executing additional commands in sync-prod-ext-staging.sh"
+sh ./sync-prod-ext-staging.sh
+fi
+
+if [ -f "sync-prod-ext-local.sh" ] && [ $LOCAL_ENV = 'local' ]
+then
+echo "executing additional commands in sync-prod-ext-local.sh"
+sh ./sync-prod-ext-local.sh
+fi
+
+# backwards compatibility with older script versions
 if [ -f "sync-prod-ext.sh" ]
 then
 echo "executing additional commands in sync-prod-ext.sh"
