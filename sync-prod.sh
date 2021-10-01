@@ -82,10 +82,15 @@ rsync --progress --exclude-from="$RSYNC_EXCLUDES" \
 --exclude '.env.wpenvsync' \
 --exclude 'sync-prod.sh' \
 --exclude 'sync-prod-ext.sh' \
+--exclude 'sync-prod-ext-local.sh' \
+--exclude 'sync-prod-ext-staging.sh' \
 --exclude 'sync-stage.sh' \
 --exclude 'sync-stage-ext.sh' \
 --exclude 'rsync-excludes.txt' \
 --exclude 'additional-rsync-excludes.txt' \
+--exclude 'additional-rsync-excludes-local.txt' \
+--exclude 'additional-rsync-excludes-staging.txt' \
+--exclude 'additional-rsync-excludes-local-override.txt' \
 --exclude '/composer.json' \
 --exclude '/composer.lock' \
 --exclude '/vendor' \
