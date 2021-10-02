@@ -169,20 +169,20 @@ wp option set blog_public 0
 if [ -f "sync-prod-ext-staging.sh" ] && [ $LOCAL_ENV = 'staging' ]
 then
 echo "executing additional commands in sync-prod-ext-staging.sh"
-sh ./sync-prod-ext-staging.sh
+bash ./sync-prod-ext-staging.sh
 fi
 
 if [ -f "sync-prod-ext-local.sh" ] && [ $LOCAL_ENV = 'local' ]
 then
 echo "executing additional commands in sync-prod-ext-local.sh"
-sh ./sync-prod-ext-local.sh
+bash ./sync-prod-ext-local.sh
 fi
 
 # backwards compatibility with older script versions
 if [ -f "sync-prod-ext.sh" ]
 then
 echo "executing additional commands in sync-prod-ext.sh"
-sh ./sync-prod-ext.sh
+bash ./sync-prod-ext.sh
 fi
 
 END=$(date +%s)
