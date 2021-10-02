@@ -1,11 +1,11 @@
 # wp-env-sync
 
-This script syncs the untracked (git) files and database from the production server.
+This script syncs the files and database from the production site/server.
 It assumes a few things...
 
 1. You have ssh access between the local/staging and remote machines and they both have WP CLI installed globally
-2. You have added an additional-rsync-excludes-local.txt or additional-rsync-excludes-staging.txt file to reflect any files and/or folders that you don't want synced from the remote for this specific environment
-3. The .env.wpenvsync, and if applicable additional-rsync-excludes-local-override.txt and sync-prod-ext.sh, files are gitignored
+2. You have added an additional-rsync-excludes.txt or (additional-rsync-excludes-staging.txt or additional-rsync-excludes-local.txt) file to reflect any files and/or folders that you don't want synced from the remote for this specific environment
+3. The .env.wpenvsync, and if applicable additional-rsync-excludes-local-override.txt, files are gitignored
 4. If using composer, your composer.json file is in the wp root
 
 ### Install (if using composer)
@@ -33,8 +33,7 @@ then run...
 
 ### Usage
 1. Setup your .env.wpenvsync file (see below)
-2. Add any necessary additional rsync exclues not already in sync-prod.sh for
-   this environment to a file named additional-rsync-excludes-staging.txt or additional-rsync-excludes-local.txt depending on the environment type
+2. Add any necessary additional rsync exclues not already in sync-prod.sh for this environment (typically files or folders for your WP project that are in version control) to a file named additional-rsync-excludes.txt or (additional-rsync-excludes-staging.txt or additional-rsync-excludes-local.txt if you need different excludes per environment) depending on the environment type
 3. Add any additional shell commands to run at the end of the script to a file name sync-prod-ext-local.sh or sync-prod-ext-staging.sh depending on the environment type
 4. Run script (bash sync-prod.sh)
 
