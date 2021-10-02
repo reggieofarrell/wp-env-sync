@@ -37,22 +37,21 @@ set +o allexport
 
 # bail if not on staging or local
 if [ $LOCAL_ENV != "staging" ] && [ $LOCAL_ENV != "local" ]
-then echo "Error: environment is not staging or local"; exit 1
+then echo "Error: 'LOCAL_ENV' set in .env.wpenvsync is not staging or local"; exit 1
 fi
 
-if ! [ -f "additional-rsync-excludes-local.txt" ] && [ $LOCAL_ENV = "local" ]
-then echo "Error: additional-rsync-excludes-local.txt file is required for env 'local'"; exit 1
+RSYNC_EXCLUDES = ''
+
+# backwards compatibility (or no environment specific excludes necessary)
+if [ -f "additional-rsync-excludes.txt" ]
+then RSYNC_EXCLUDES = "additional-rsync-excludes.txt"
 fi
 
-if ! [ -f "additional-rsync-excludes-staging.txt" ] && [ $LOCAL_ENV = "staging" ]
-then echo "Error: additional-rsync-excludes-staging.txt file is required for env 'staging'"; exit 1
-fi
-
-if [ $LOCAL_ENV = 'local' ]
+if [ -f "additional-rsync-excludes-local.txt" ] && [ $LOCAL_ENV = "local" ]
 then RSYNC_EXCLUDES = "additional-rsync-excludes-local.txt"
 fi
 
-if [ $LOCAL_ENV = 'staging' ]
+if [ -f "additional-rsync-excludes-staging.txt" ] && [ $LOCAL_ENV = "staging" ]
 then RSYNC_EXCLUDES = "additional-rsync-excludes-staging.txt"
 fi
 
