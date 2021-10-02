@@ -28,6 +28,10 @@ then echo "Starting sync script..."
 else echo "Error: .env.wpenvsync file not found, exiting..."; exit 1
 fi
 
+if [ $SSH_USER = "example@1.1.1.1" ]
+then echo "Error: you forgot to change the variables in the .env.wpenvsync file from the example values"; exit 1
+fi
+
 START=$(date +%s)
 
 # import variables from .env.wpenvsync file
