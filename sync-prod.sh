@@ -28,7 +28,7 @@ then echo "Starting sync script..."
 else echo "Error: .env.wpenvsync file not found, exiting..."; exit 1
 fi
 
-if [ $SSH_USER = "example@1.1.1.1" ]
+if [ "$SSH_USER" == "example@1.1.1.1" ]
 then echo "Error: you forgot to change the variables in the .env.wpenvsync file from the example values"; exit 1
 fi
 
@@ -44,24 +44,30 @@ if [ $LOCAL_ENV != "staging" ] && [ $LOCAL_ENV != "local" ]
 then echo "Error: 'LOCAL_ENV' set in .env.wpenvsync is not staging or local"; exit 1
 fi
 
-RSYNC_EXCLUDES = ''
+RSYNC_EXCLUDES=""
 
 # backwards compatibility (or no environment specific excludes necessary)
 if [ -f "additional-rsync-excludes.txt" ]
-then RSYNC_EXCLUDES = "additional-rsync-excludes.txt"
+then RSYNC_EXCLUDES="additional-rsync-excludes.txt"
 fi
 
-if [ -f "additional-rsync-excludes-local.txt" ] && [ $LOCAL_ENV = "local" ]
-then RSYNC_EXCLUDES = "additional-rsync-excludes-local.txt"
+if [ -f "additional-rsync-excludes-local.txt" ] && [ $LOCAL_ENV == "local" ]
+then RSYNC_EXCLUDES="additional-rsync-excludes-local.txt"
 fi
 
-if [ -f "additional-rsync-excludes-staging.txt" ] && [ $LOCAL_ENV = "staging" ]
-then RSYNC_EXCLUDES = "additional-rsync-excludes-staging.txt"
+if [ -f "additional-rsync-excludes-staging.txt" ] && [ $LOCAL_ENV == "staging" ]
+then RSYNC_EXCLUDES="additional-rsync-excludes-staging.txt"
 fi
 
 # allow overriding additional-rsync-excludes-local.txt
-if [ -f "additional-rsync-excludes-local-override.txt" ] && [ $LOCAL_ENV = "local" ]
-then RSYNC_EXCLUDES = "additional-rsync-excludes-local-override.txt"
+if [ -f "additional-rsync-excludes-local-override.txt" ] && [ "$LOCAL_ENV" == "local" ]
+then RSYNC_EXCLUDES="additional-rsync-excludes-local-override.txt"
+fi
+
+PORT="22"
+
+if [ "$SSH_PORT" != "" ]
+then PORT="$SSH_PORT"
 fi
 
 echo "Syncing files from production..."
@@ -98,7 +104,7 @@ rsync --progress --exclude-from="$RSYNC_EXCLUDES" \
 --exclude '/composer.lock' \
 --exclude '/vendor' \
 --exclude 'wp-cli.yml' \
---delete --copy-links -avzhe "ssh -i $SSH_KEY_PATH" $SSH_USER:~/$REMOTE_PATH/ ./
+--delete --copy-links -avzhe "ssh -i $SSH_KEY_PATH -p $PORT" $SSH_USER:~/$REMOTE_PATH/ ./
 
 if [ $LOCAL_ENV = "staging" ]
 then
@@ -112,13 +118,13 @@ then
 fi
 
 echo "Exporting and compressing DB on remote..."
-ssh -i $SSH_KEY_PATH $SSH_USER /bin/bash << EOF
+ssh -i $SSH_KEY_PATH $SSH_USER -p $PORT /bin/bash << EOF
   wp db export ${REMOTE_ENV}_db_${START}.sql --path=$REMOTE_PATH
   gzip -v ${REMOTE_ENV}_db_${START}.sql
 EOF
 
 echo "Copying DB from remote..."
-scp -i $SSH_KEY_PATH $SSH_USER:~/${REMOTE_ENV}_db_${START}.sql.gz ./${REMOTE_ENV}_db_${START}.sql.gz
+scp -i $SSH_KEY_PATH -p $PORT $SSH_USER:~/${REMOTE_ENV}_db_${START}.sql.gz ./${REMOTE_ENV}_db_${START}.sql.gz
 echo "Decompressing..."
 gunzip ./${REMOTE_ENV}_db_${START}.sql.gz
 
@@ -155,7 +161,7 @@ fi
 echo "A little housekeeping..."
 rm ./${REMOTE_ENV}_db_${START}.sql
 
-ssh -i $SSH_KEY_PATH $SSH_USER /bin/bash << EOF
+ssh -i $SSH_KEY_PATH -p $PORT $SSH_USER /bin/bash << EOF
   rm ./${REMOTE_ENV}_db_${START}.sql.gz
 EOF
 

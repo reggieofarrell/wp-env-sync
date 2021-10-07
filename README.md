@@ -44,6 +44,8 @@ You should have a `.env.wpenvsync` file in the root of the wp project with all o
 `SSH_KEY_PATH=~/.ssh/id_rsa`
 ###### user@domain for the remote
 `SSH_USER=someuser@1.1.1.1`
+###### ssh port on the remote server (typically 22)
+`SSH_PORT=22`
 ###### is this site env running on https?
 `LOCAL_ENV_IS_HTTPS=false`
 ###### your local domain for this site
