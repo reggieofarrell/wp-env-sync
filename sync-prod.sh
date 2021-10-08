@@ -124,7 +124,7 @@ ssh -i $SSH_KEY_PATH $SSH_USER -p $PORT /bin/bash << EOF
 EOF
 
 echo "Copying DB from remote..."
-scp -i $SSH_KEY_PATH -p $PORT $SSH_USER:~/${REMOTE_ENV}_db_${START}.sql.gz ./${REMOTE_ENV}_db_${START}.sql.gz
+scp -i $SSH_KEY_PATH -P $PORT $SSH_USER:~/${REMOTE_ENV}_db_${START}.sql.gz ./${REMOTE_ENV}_db_${START}.sql.gz
 echo "Decompressing..."
 gunzip ./${REMOTE_ENV}_db_${START}.sql.gz
 
