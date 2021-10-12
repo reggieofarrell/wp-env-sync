@@ -78,6 +78,7 @@ rsync --progress --exclude-from="$RSYNC_EXCLUDES" \
 --exclude '.git' \
 --exclude '.gitignore' \
 --exclude '.github' \
+--exclude '/README.md' \
 --exclude 'gitdeploy.php' \
 --exclude 'ShortpixelBackups' \
 --exclude 'wp-config.php' \
