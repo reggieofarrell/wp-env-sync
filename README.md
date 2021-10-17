@@ -1,6 +1,6 @@
 # wp-env-sync
 
-This script syncs the files and database from the production site/server.
+This script syncs the files and database from the production site/server of a Wordpress install to a local or staging copy.
 It assumes a few things...
 
 1. You have ssh access between the local/staging and remote machines and they both have WP CLI installed globally
@@ -37,7 +37,7 @@ then run...
 3. Add any additional shell commands to run at the end of the script to a file name sync-prod-ext-local.sh or sync-prod-ext-staging.sh depending on the environment type
 4. Run script (bash sync-prod.sh)
 
-## .env file variables
+## .env.wpenvsync file variables
 You should have a `.env.wpenvsync` file in the root of the wp project with all of these defined.  Values are just examples...
 
 ###### locaion of your ssh key for the remote server
