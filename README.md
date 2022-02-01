@@ -27,11 +27,11 @@ add these things to your composer.json file...
 "scripts": {
   "post-install-cmd": [
     "cp ./vendor/reggieofarrell/wp-env-sync/wp-env-sync.sh ./",
-    "cp -rn ./vendor/reggieofarrell/wp-env-sync/ ./wp-env-sync"
+    "cp -rn ./vendor/reggieofarrell/wp-env-sync/wp-env-sync/ ./wp-env-sync"
   ],
   "post-update-cmd": [
     "cp ./vendor/reggieofarrell/wp-env-sync/wp-env-sync.sh ./",
-    "cp -rn ./vendor/reggieofarrell/wp-env-sync ./wp-env-sync"
+    "cp -rn ./vendor/reggieofarrell/wp-env-sync/wp-env-sync/ ./wp-env-sync"
   ]
 }
 ```
