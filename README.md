@@ -46,7 +46,7 @@ then run...
 4. Run script (`bash wp-env-sync.sh`)
 5. You may want to create your own script that calls `wp-env-sync.sh` with the correct options for your use case already added.
 
-## __options__
+### __options__
 
 `--no-file-sync` :: skips the step of syncing the files from the remote environment
 
@@ -55,7 +55,7 @@ then run...
 `--no-db-sync` :: skips the step of syncing the database from the remove environment
 
 
-## __.env file variables__
+### __.env file variables__
 You should have a `.env.wpenvsync` file in the root of the wp project with all of these defined.  Values are just examples...
 
 ```bash
