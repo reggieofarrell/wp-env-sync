@@ -1,6 +1,6 @@
 # wp-env-sync
 
-This script syncs the files and database from the production site/server.
+This script syncs the files and database from the production site/server of a Wordpress install to a local or staging copy.
 It assumes a few things...
 
 1. You have ssh access between the local/staging and remote machines and they both have WP CLI installed globally
