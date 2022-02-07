@@ -133,7 +133,7 @@ PORT="$SSH_PORT"
 fi
 
 echo "checking ssh connection..."
-ssh -p $PORT -q -o BatchMode=yes -o ConnectTimeout=5 $SSH_USER exit
+ssh -p $PORT -i $SSH_KEY_PATH -q -o BatchMode=yes -o ConnectTimeout=5 $SSH_USER exit
 
 if [[ $? != "0" ]]; then
   echo "SSH connection failed"
