@@ -122,8 +122,8 @@ RSYNC_EXCLUDES="./wp-env-sync/additional-rsync-excludes-staging.txt"
 fi
 
 # allow overriding additional-rsync-excludes-local.txt
-if [[ -f "wp-env-sync/additional-rsync-excludes-local-override.txt" && $LOCAL_ENV == "local" ]]; then
-RSYNC_EXCLUDES="./wp-env-sync/additional-rsync-excludes-local-override.txt"
+if [[ -f "./additional-rsync-excludes-local-override.txt" && $LOCAL_ENV == "local" ]]; then
+RSYNC_EXCLUDES="./additional-rsync-excludes-local-override.txt"
 fi
 
 PORT="22"
