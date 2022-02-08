@@ -177,6 +177,9 @@ if [[ $SKIP_RSYNC == "no" ]]; then
     --exclude '/additional-rsync-excludes-staging.txt' \
     --exclude '/additional-rsync-excludes-local-override.txt' \
     --exclude '/.htaccess' \
+    --exclude '/.htaccess~' \
+    --exclude '/.htpasswd' \
+    --exclude '/.well-known/' \
     --exclude '/.git' \
     --exclude '/.gitignore' \
     --exclude '/.github' \
