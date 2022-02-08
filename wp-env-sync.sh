@@ -53,6 +53,7 @@ fi
 SKIP_DB_SYNC="no"
 SKIP_PERMS="no"
 SKIP_RSYNC="no"
+SLOW_MODE="no"
 
 # set up flags
 # https://stackoverflow.com/questions/402377/using-getopts-to-process-long-and-short-command-line-options#answer-768068
@@ -63,15 +64,19 @@ while getopts "$optspec" optchar; do
         case "${OPTARG}" in
             no-db-sync)
                 SKIP_DB_SYNC="yes"; OPTIND=$(( $OPTIND + 1 ))
-                # echo "Parsing option: '--${OPTARG}', value: '${SKIP_DB_SYNC}'" >&2;
+                echo "Parsing option: '--${OPTARG}', value: '${SKIP_DB_SYNC}'" >&2;
                 ;;
             no-perms)
                 SKIP_PERMS="yes"; OPTIND=$(( $OPTIND + 1 ))
-                # echo "Parsing option: '--${OPTARG}', value: '${SKIP_PERMS}'" >&2;
+                echo "Parsing option: '--${OPTARG}', value: '${SKIP_PERMS}'" >&2;
                 ;;
             no-file-sync)
                 SKIP_RSYNC="yes"; OPTIND=$(( $OPTIND + 1 ))
-                # echo "Parsing option: '--${OPTARG}', value: '${SKIP_RSYNC}'" >&2;
+                echo "Parsing option: '--${OPTARG}', value: '${SKIP_RSYNC}'" >&2;
+                ;;
+            slow-mode)
+                SLOW_MODE="yes"; OPTIND=$(( $OPTIND + 1 ))
+                echo "Parsing option: '--${OPTARG}', value: '${SLOW_MODE}'" >&2;
                 ;;
             # Left here as examples...
             # loglevel)
@@ -106,6 +111,8 @@ while getopts "$optspec" optchar; do
     esac
 done
 
+if [[ $SLOW_MODE == "yes" ]]; then sleep 1; fi
+
 RSYNC_EXCLUDES=""
 
 # backwards compatibility (or no environment specific excludes necessary)
@@ -126,19 +133,32 @@ if [[ -f "./additional-rsync-excludes-local-override.txt" && $LOCAL_ENV == "loca
 RSYNC_EXCLUDES="./additional-rsync-excludes-local-override.txt"
 fi
 
+echo "using additional rsync excludes from $RSYNC_EXCLUDES"
+
+if [[ $SLOW_MODE == "yes" ]]; then sleep 1; fi
+
 PORT="22"
 
 if [[ $SSH_PORT != "" ]]; then
 PORT="$SSH_PORT"
 fi
 
-echo "checking ssh connection..."
-ssh -p $PORT -i $SSH_KEY_PATH -q -o BatchMode=yes -o ConnectTimeout=5 $SSH_USER exit
+echo "using ssh port $SSH_PORT"
 
-if [[ $? != "0" ]]; then
-  echo "SSH connection failed"
-  exit 1
+if [[ $SLOW_MODE == "yes" ]]; then sleep 1; fi
+
+echo "checking ssh connection..."
+ssh -p $PORT -i $SSH_KEY_PATH -q -o BatchMode=yes -o ConnectTimeout=5 $SSH_USER 'exit 0'
+
+if [[ $? != "0" ]];
+then
+    echo "SSH connection failed :("
+    exit 1
+else
+    echo "Success!"
 fi
+
+if [[ $SLOW_MODE == "yes" ]]; then sleep 1; fi
 
 if [[ $SKIP_RSYNC == "no" ]]; then
     echo "Syncing files from production..."

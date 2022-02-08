@@ -27,11 +27,11 @@ add these things to your composer.json file...
 "scripts": {
   "post-install-cmd": [
     "cp ./vendor/reggieofarrell/wp-env-sync/wp-env-sync.sh ./",
-    "if [ ! -f ./wp-env-sync/ ]; then cp -r ./vendor/reggieofarrell/wp-env-sync/wp-env-sync/ ./wp-env-sync/; fi;"
+    "if [ ! -f ./wp-env-sync/ ]; then cp -r ./vendor/reggieofarrell/wp-env-sync/wp-env-sync/ ./wp-env-sync; fi;"
   ],
   "post-update-cmd": [
     "cp ./vendor/reggieofarrell/wp-env-sync/wp-env-sync.sh ./",
-    "if [ ! -f ./wp-env-sync/ ]; then cp -r ./vendor/reggieofarrell/wp-env-sync/wp-env-sync/ ./wp-env-sync/; fi;"
+    "if [ ! -f ./wp-env-sync/ ]; then cp -r ./vendor/reggieofarrell/wp-env-sync/wp-env-sync/ ./wp-env-sync; fi;"
   ]
 }
 ```
@@ -40,11 +40,12 @@ then run...
 `composer require reggieofarrell/wp-env-sync`
 
 ## __Usage__
-1. Setup your .env.wpenvsync file (see below)
-2. Add any necessary additional rsync exclues not already in wp-env-sync.sh for this environment (typically files or folders for your WP project that are in version control) to a file named additional-rsync-excludes.txt or (additional-rsync-excludes-staging.txt or additional-rsync-excludes-local.txt if you need different excludes per environment) depending on the environment type
-3. Add any additional shell commands to run at the end of the script to a file name wp-env-sync-ext-local.sh or wp-env-sync-ext-staging.sh depending on the environment type
-4. Run script (`bash wp-env-sync.sh`)
-5. You may want to create your own script that calls `wp-env-sync.sh` with the correct options for your use case already added.
+1. Setup your .env.wpenvsync file (see below) in the WP root directory
+2. In a `wp-env-sync` directory within the WP root directory...
+   - Add any necessary additional rsync exclues not already in wp-env-sync.sh for this environment (typically files or folders for your WP project that are in version control) to a file named additional-rsync-excludes.txt or (additional-rsync-excludes-staging.txt or additional-rsync-excludes-local.txt if you need different excludes per environment) depending on the environment type
+   - Add any additional shell commands to run at the end of the script to a file name wp-env-sync-ext-local.sh or wp-env-sync-ext-staging.sh depending on the environment type
+3. Run script (`bash wp-env-sync.sh`)
+4. You may want to create your own script that calls `wp-env-sync.sh` with the correct options for your use case already added.
 
 ### __options__
 
@@ -81,8 +82,8 @@ FULL_REMOTE_PATH=/sites/example.com/files
 REMOTE_ENV=prod
 # local env being synced to ['local', 'staging']
 LOCAL_ENV=local
-# local mysql version
+# local mysql version (choose 5.7 if running MariaDB)
 LOCAL_MYSQL_VER=5.7
-###### remote mysql version
+# remote mysql version
 REMOTE_MYSQL_VER=8.0
 ```
