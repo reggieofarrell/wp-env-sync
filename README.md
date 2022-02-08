@@ -49,11 +49,13 @@ then run...
 
 ### __options__
 
-`--no-file-sync` :: skips the step of syncing the files from the remote environment
+`-d --no-db-sync` :: skips the step of syncing the database from the remove environment
 
-`--no-perms` :: skips the step of tring to reset file permissions after the file sync
+`-f --no-file-sync` :: skips the step of syncing the files from the remote environment
 
-`--no-db-sync` :: skips the step of syncing the database from the remove environment
+`-p --no-perms` :: skips the step of tring to reset file permissions after the file sync
+
+`-s --slow` :: pauses 2 seconds after some commands to show output
 
 
 ### __.env file variables__

@@ -26,17 +26,14 @@
 #   --no-file-sync : skips the file sync from the remote environment
 #   --no-perms : skips the process of setting file permissions after the file sync
 #   --no-db-sync : skips the syncing of the database from the remote environment
+#   --slow : pauses 2 seconds on some commands to show output
 #
 #
 
-if [ -f ".env.wpenvsync" ]
-then echo "Starting sync script..."
-else echo "Error: .env.wpenvsync file not found, exiting..."; exit 1
-fi
-
-if [ "$SSH_USER" == "example@1.1.1.1" ]
-then echo "Error: you forgot to change the variables in the .env.wpenvsync file from the example values"; exit 1
-fi
+# if [ -f ".env.wpenvsync" ]
+# then echo "Starting sync script..."
+# else echo "Error: .env.wpenvsync file not found, exiting..."; exit 1
+# fi
 
 START=$(date +%s)
 
@@ -45,8 +42,12 @@ set -o allexport
 source .env.wpenvsync
 set +o allexport
 
+if [[ $SSH_USER == "example@1.1.1.1" ]]
+then echo "Error: you forgot to change the variables in the .env.wpenvsync file from the example values"; exit 1
+fi
+
 # bail if not on staging or local
-if [ $LOCAL_ENV != "staging" ] && [ $LOCAL_ENV != "local" ]
+if [[ $LOCAL_ENV != "staging" ]] && [[ $LOCAL_ENV != "local" ]]
 then echo "Error: 'LOCAL_ENV' set in .env.wpenvsync is not staging or local"; exit 1
 fi
 
@@ -55,63 +56,63 @@ SKIP_PERMS="no"
 SKIP_RSYNC="no"
 SLOW_MODE="no"
 
-# set up flags
-# https://stackoverflow.com/questions/402377/using-getopts-to-process-long-and-short-command-line-options#answer-768068
-optspec=":-:"
-while getopts "$optspec" optchar; do
-  case "${optchar}" in
-    -)
-        case "${OPTARG}" in
-            no-db-sync)
-                SKIP_DB_SYNC="yes"; OPTIND=$(( $OPTIND + 1 ))
-                echo "Parsing option: '--${OPTARG}', value: '${SKIP_DB_SYNC}'" >&2;
-                ;;
-            no-perms)
-                SKIP_PERMS="yes"; OPTIND=$(( $OPTIND + 1 ))
-                echo "Parsing option: '--${OPTARG}', value: '${SKIP_PERMS}'" >&2;
-                ;;
-            no-file-sync)
-                SKIP_RSYNC="yes"; OPTIND=$(( $OPTIND + 1 ))
-                echo "Parsing option: '--${OPTARG}', value: '${SKIP_RSYNC}'" >&2;
-                ;;
-            slow-mode)
-                SLOW_MODE="yes"; OPTIND=$(( $OPTIND + 1 ))
-                echo "Parsing option: '--${OPTARG}', value: '${SLOW_MODE}'" >&2;
-                ;;
-            # Left here as examples...
-            # loglevel)
-            #     val="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
-            #     echo "Parsing option: '--${OPTARG}', value: '${val}'" >&2;
-            #     ;;
-            # loglevel=*)
-            #     val=${OPTARG#*=}
-            #     opt=${OPTARG%=$val}
-            #     echo "Parsing option: '--${opt}', value: '${val}'" >&2
-            #     ;;
-            *)
-                if [ "$OPTERR" = 1 ] && [ "${optspec:0:1}" != ":" ]; then
-                    echo "Unknown option --${OPTARG}" >&2
-                    exit 1
-                fi
-                ;;
-        esac;;
-    # h)
-    #     echo "usage: $0 [-v] [--loglevel[=]<value>]" >&2
-    #     exit 2
-    #     ;;
-    # v)
-    #     echo "Parsing option: '-${optchar}'" >&2
-    #     ;;
-    *)
-        if [ "$OPTERR" != 1 ] || [ "${optspec:0:1}" = ":" ]; then
-            echo "Non-option argument: '-${OPTARG}'" >&2
-            exit 1
-        fi
+function _cleanup ()
+{
+  unset -f _usage _cleanup ; return 0
+}
+
+## Clear out nested functions on exit
+trap _cleanup INT EXIT RETURN
+
+function _usage()
+{
+###### U S A G E : Help ######
+cat <<EOF
+Usage: bash wp-env-sync.sh <[options]>
+Options:
+    -d   --no-db-sync       Set bar to yes    ($foo)
+    -f   --no-file-sync     Set foo to yes    ($bart)
+    -h   --help             Show this message
+    -p   --no-perms         Set arguments to yes ($arguments) AND get ARGUMENT ($ARG)
+    -s   --slow             Set barfoo to yes ($barfoo)
+EOF
+exit
+}
+
+# parse options
+# https://stackoverflow.com/questions/402377/using-getopts-to-process-long-and-short-command-line-options#answer-12523979
+while getopts ':dfhps-' OPTION ; do
+  case "$OPTION" in
+    d ) SKIP_DB_SYNC=yes               ;;
+    f ) SKIP_RSYNC=yes                 ;;
+    h ) _usage                         ;;
+    p ) SKIP_PERMS=yes                 ;;
+    s ) SLOW_MODE=yes                  ;;
+    - ) [ $OPTIND -ge 1 ] && optind=$(expr $OPTIND - 1 ) || optind=$OPTIND
+        eval OPTION="\$$optind"
+        OPTARG=$(echo $OPTION | cut -d'=' -f2)
+        OPTION=$(echo $OPTION | cut -d'=' -f1)
+        case $OPTION in
+            --no-db-sync        ) SKIP_DB_SYNC=yes               ;;
+            --no-file-sync      ) SKIP_RSYNC=yes                 ;;
+            --no-perms          ) SKIP_PERMS=yes                 ;;
+            --slow              ) SLOW_MODE=yes                  ;;
+            --help              ) _usage                         ;;
+            * )  "invalid option $OPTION" exit                   ;;
+        esac
+        OPTIND=1
+        shift
         ;;
-    esac
+    ? )  "invalid option $OPTION" exit 1 ;;
+  esac
 done
 
-if [[ $SLOW_MODE == "yes" ]]; then sleep 1; fi
+echo "SKIP_DB_SYNC=$SKIP_DB_SYNC"
+echo "SKIP_RSYNC=$SKIP_RSYNC"
+echo "SKIP_PERMS=$SKIP_PERMS"
+echo "SLOW_MODE=$SLOW_MODE"
+
+if [[ $SLOW_MODE == "yes" ]]; then sleep 2; fi
 
 RSYNC_EXCLUDES=""
 
@@ -135,7 +136,7 @@ fi
 
 echo "using additional rsync excludes from $RSYNC_EXCLUDES"
 
-if [[ $SLOW_MODE == "yes" ]]; then sleep 1; fi
+if [[ $SLOW_MODE == "yes" ]]; then sleep 2; fi
 
 PORT="22"
 
@@ -143,9 +144,9 @@ if [[ $SSH_PORT != "" ]]; then
 PORT="$SSH_PORT"
 fi
 
-echo "using ssh port $SSH_PORT"
+echo "using ssh port $PORT"
 
-if [[ $SLOW_MODE == "yes" ]]; then sleep 1; fi
+if [[ $SLOW_MODE == "yes" ]]; then sleep 2; fi
 
 echo "checking ssh connection..."
 ssh -p $PORT -i $SSH_KEY_PATH -q -o BatchMode=yes -o ConnectTimeout=5 $SSH_USER 'exit 0'
@@ -158,7 +159,7 @@ else
     echo "Success!"
 fi
 
-if [[ $SLOW_MODE == "yes" ]]; then sleep 1; fi
+if [[ $SLOW_MODE == "yes" ]]; then sleep 2; fi
 
 if [[ $SKIP_RSYNC == "no" ]]; then
     echo "Syncing files from production..."
@@ -180,6 +181,7 @@ if [[ $SKIP_RSYNC == "no" ]]; then
     --exclude '/.htaccess~' \
     --exclude '/.htpasswd' \
     --exclude '/.well-known/' \
+    --exclude '/cache/' \
     --exclude '/.git' \
     --exclude '/.gitignore' \
     --exclude '/.github' \
