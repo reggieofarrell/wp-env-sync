@@ -249,10 +249,10 @@ if [[ $LOCAL_MYSQL_VER == "5.7" && $REMOTE_MYSQL_VER == "8.0" ]]; then
     echo "Reformatting MySQL 8.0 db export for MySQL 5.7..."
     if [[ "$OSTYPE" == "darwin"* ]]; then
         # OSX
-        sed -i '' -e 's/utf8mb4_0900_ai_ci/utf8mb4_unicode_520_ci/g' ${REMOTE_ENV}_db_${START}.sql
+        sed -i '' -e 's/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g' ${REMOTE_ENV}_db_${START}.sql
     else
         # Linux
-        sed -i -e 's/utf8mb4_0900_ai_ci/utf8mb4_unicode_520_ci/g' ${REMOTE_ENV}_db_${START}.sql
+        sed -i -e 's/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g' ${REMOTE_ENV}_db_${START}.sql
     fi
 fi
 
