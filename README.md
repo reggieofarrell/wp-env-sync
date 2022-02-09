@@ -12,7 +12,7 @@ It assumes a few things...
 If you are migrating from v2.x to v3.x.  A few important breaking changes have been made...
 
 1. The main script has been renamed from `sync-prod.sh` to `wp-env-sync.sh`
-2. All other files aside from the main script and the `.env.wpenvsync` file now belong in a `wp-env-sync` which should be in the same location at the `wp-env-sync.sh` and `.env.wpenvsync` files... the Wordpress root directory
+2. All other files aside from the main script and the `.env.wpenvsync` file now belong in a `wp-env-sync` folder which should be in the same location at the `wp-env-sync.sh` and `.env.wpenvsync` files... the Wordpress root directory
 
 ## __Install (if using composer)__
 add these things to your composer.json file...
@@ -42,8 +42,8 @@ then run...
 ## __Usage__
 1. Setup your .env.wpenvsync file (see below) in the WP root directory
 2. In a `wp-env-sync` directory within the WP root directory...
-   - Add any necessary additional rsync exclues not already in wp-env-sync.sh for this environment (typically files or folders for your WP project that are in version control) to a file named additional-rsync-excludes.txt or (additional-rsync-excludes-staging.txt or additional-rsync-excludes-local.txt if you need different excludes per environment) depending on the environment type
-   - Add any additional shell commands to run at the end of the script to a file name wp-env-sync-ext-local.sh or wp-env-sync-ext-staging.sh depending on the environment type
+   - Add any necessary additional rsync exclues not already in `wp-env-sync.sh` for this environment (typically files or folders for your WP project that are in version control) to a file named `additional-rsync-excludes.txt` or (`additional-rsync-excludes-staging.txt` or `additional-rsync-excludes-local.txt` if you need different excludes per environment) depending on the environment type
+   - Add any additional shell commands to run at the end of the script to a file name `wp-env-sync-ext-local.sh` or`wp-env-sync-ext-staging.sh` depending on the environment type
 3. Run script (`bash wp-env-sync.sh`)
 4. You may want to create your own script that calls `wp-env-sync.sh` with the correct options for your use case already added.
 
