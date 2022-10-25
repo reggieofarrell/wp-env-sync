@@ -40,9 +40,10 @@ then run...
 `composer require reggieofarrell/wp-env-sync`
 
 ## __Usage__
-1. Setup your .env.wpenvsync file (see below) in the WP root directory
+1. Setup your `.env.wpenvsync` file (see below) in the WP root directory
 2. In a `wp-env-sync` directory within the WP root directory...
    - Add any necessary additional rsync exclues not already in `wp-env-sync.sh` for this environment (typically files or folders for your WP project that are in version control) to a file named `additional-rsync-excludes.txt` or (`additional-rsync-excludes-staging.txt` or `additional-rsync-excludes-local.txt` if you need different excludes per environment) depending on the environment type
+   - If you're running wp multisite, the default search-replace command that we run will not work properly. In this case you'll need to add your own `db-search-replace.sh` file in the `wp-env-sync` directory. If this file is detected, the commands in that file will be run instead of the default search-replace commands
    - Add any additional shell commands to run at the end of the script to a file name `wp-env-sync-ext-local.sh` or`wp-env-sync-ext-staging.sh` depending on the environment type
 3. Run script (`bash wp-env-sync.sh`)
 4. You may want to create your own script that calls `wp-env-sync.sh` with the correct options for your use case already added.
