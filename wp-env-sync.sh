@@ -285,6 +285,8 @@ else
     echo "Changing https references to http..."
     wp search-replace https://$LOCAL_DOMAIN http://$LOCAL_DOMAIN --all-tables  --skip-columns=guid --precise
     fi
+fi
+
 fi # END db sync
 
 echo "flushing caches and rewrite rules..."
