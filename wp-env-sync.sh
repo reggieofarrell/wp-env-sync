@@ -236,6 +236,11 @@ scp -i $SSH_KEY_PATH -P $PORT $SSH_USER:~/${REMOTE_ENV}_db_${START}.sql.gz ./${R
 echo "Decompressing..."
 gunzip ./${REMOTE_ENV}_db_${START}.sql.gz
 
+echo "Deleting prod db export on remote..."
+ssh -i $SSH_KEY_PATH -p $PORT $SSH_USER /bin/bash << EOF
+rm ./${REMOTE_ENV}_db_${START}.sql.gz
+EOF
+
 if [ $LOCAL_ENV = 'local' ]; then
 echo "Backing up the database..."
 wp db export ./_db.sql
@@ -259,25 +264,27 @@ fi
 echo "Importing production database..."
 wp db import ./${REMOTE_ENV}_db_${START}.sql
 
-echo "Running search-replace on url's..."
-wp search-replace //$REMOTE_DOMAIN //$LOCAL_DOMAIN --all-tables  --skip-columns=guid --precise
-
-echo "Running search-replace on files paths..."
-wp search-replace $FULL_REMOTE_PATH $PWD --all-tables  --skip-columns=guid --precise
-
-if [ $REMOTE_ENV_IS_HTTPS = true ] && [ $LOCAL_ENV_IS_HTTPS = false ]; then
-# make sure all https domain references are changed to http
-echo "Changing https references to http..."
-wp search-replace https://$LOCAL_DOMAIN http://$LOCAL_DOMAIN --all-tables  --skip-columns=guid --precise
-fi
-
-echo "A little housekeeping..."
+echo "Deleting prod db download..."
 rm ./${REMOTE_ENV}_db_${START}.sql
 
-ssh -i $SSH_KEY_PATH -p $PORT $SSH_USER /bin/bash << EOF
-rm ./${REMOTE_ENV}_db_${START}.sql.gz
-EOF
+if [[ -f "wp-env-sync/db-search-replace.sh" ]]; then
+    # This is here to support multi-site since our generic
+    # search-replace method doesn't work on multisite.
+    # A custom one will need to be written in this case
+    echo "found wp-env-sync/db-search-replace.sh, executing..."
+    bash ./wp-env-sync/sync-prod-ext.sh
+else
+    echo "Running search-replace on url's..."
+    wp search-replace //$REMOTE_DOMAIN //$LOCAL_DOMAIN --all-tables  --skip-columns=guid --precise
 
+    echo "Running search-replace on files paths..."
+    wp search-replace $FULL_REMOTE_PATH $PWD --all-tables  --skip-columns=guid --precise
+
+    if [ $REMOTE_ENV_IS_HTTPS = true ] && [ $LOCAL_ENV_IS_HTTPS = false ]; then
+    # make sure all https domain references are changed to http
+    echo "Changing https references to http..."
+    wp search-replace https://$LOCAL_DOMAIN http://$LOCAL_DOMAIN --all-tables  --skip-columns=guid --precise
+    fi
 fi # END db sync
 
 echo "flushing caches and rewrite rules..."
