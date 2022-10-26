@@ -107,10 +107,13 @@ while getopts ':dfhps-' OPTION ; do
   esac
 done
 
+IS_MULTISITE=$(wp config get MULTISITE)
+
 echo "SKIP_DB_SYNC=$SKIP_DB_SYNC"
 echo "SKIP_RSYNC=$SKIP_RSYNC"
 echo "SKIP_PERMS=$SKIP_PERMS"
 echo "SLOW_MODE=$SLOW_MODE"
+echo "IS_MULTISITE=$IS_MULTISITE"
 
 if [[ $SLOW_MODE == "yes" ]]; then sleep 2; fi
 
@@ -118,20 +121,20 @@ RSYNC_EXCLUDES=""
 
 # backwards compatibility (or no environment specific excludes necessary)
 if [[ -f "wp-env-sync/additional-rsync-excludes.txt" ]]; then
-RSYNC_EXCLUDES="./wp-env-sync/additional-rsync-excludes.txt"
+    RSYNC_EXCLUDES="./wp-env-sync/additional-rsync-excludes.txt"
 fi
 
 if [[ -f "wp-env-sync/additional-rsync-excludes-local.txt" && $LOCAL_ENV == "local" ]]; then
-RSYNC_EXCLUDES="./wp-env-sync/additional-rsync-excludes-local.txt"
+    RSYNC_EXCLUDES="./wp-env-sync/additional-rsync-excludes-local.txt"
 fi
 
 if [[ -f "wp-env-sync/additional-rsync-excludes-staging.txt" && $LOCAL_ENV == "staging" ]]; then
-RSYNC_EXCLUDES="./wp-env-sync/additional-rsync-excludes-staging.txt"
+    RSYNC_EXCLUDES="./wp-env-sync/additional-rsync-excludes-staging.txt"
 fi
 
 # allow overriding additional-rsync-excludes-local.txt
 if [[ -f "./additional-rsync-excludes-local-override.txt" && $LOCAL_ENV == "local" ]]; then
-RSYNC_EXCLUDES="./additional-rsync-excludes-local-override.txt"
+    RSYNC_EXCLUDES="./additional-rsync-excludes-local-override.txt"
 fi
 
 echo "using additional rsync excludes from $RSYNC_EXCLUDES"
@@ -151,8 +154,7 @@ if [[ $SLOW_MODE == "yes" ]]; then sleep 2; fi
 echo "checking ssh connection..."
 ssh -p $PORT -i $SSH_KEY_PATH -q -o BatchMode=yes -o ConnectTimeout=5 $SSH_USER 'exit 0'
 
-if [[ $? != "0" ]];
-then
+if [[ $? != "0" ]]; then
     echo "SSH connection failed :("
     exit 1
 else
@@ -225,95 +227,108 @@ fi # END File sync
 
 if [[ $SKIP_DB_SYNC == "no" ]]; then
 
-echo "Exporting and compressing DB on remote..."
-ssh -i $SSH_KEY_PATH $SSH_USER -p $PORT /bin/bash << EOF
-wp db export ${REMOTE_ENV}_db_${START}.sql --path=$REMOTE_PATH
-gzip -v ${REMOTE_ENV}_db_${START}.sql
+    echo "Exporting and compressing DB on remote..."
+    ssh -i $SSH_KEY_PATH $SSH_USER -p $PORT /bin/bash << EOF
+    wp db export ${REMOTE_ENV}_db_${START}.sql --path=$REMOTE_PATH
+    gzip -v ${REMOTE_ENV}_db_${START}.sql
 EOF
 
-echo "Copying DB from remote..."
-scp -i $SSH_KEY_PATH -P $PORT $SSH_USER:~/${REMOTE_ENV}_db_${START}.sql.gz ./${REMOTE_ENV}_db_${START}.sql.gz
-echo "Decompressing..."
-gunzip ./${REMOTE_ENV}_db_${START}.sql.gz
+    echo "Copying DB from remote..."
+    scp -i $SSH_KEY_PATH -P $PORT $SSH_USER:~/${REMOTE_ENV}_db_${START}.sql.gz ./${REMOTE_ENV}_db_${START}.sql.gz
+    echo "Decompressing..."
+    gunzip ./${REMOTE_ENV}_db_${START}.sql.gz
 
-echo "Deleting prod db export on remote..."
-ssh -i $SSH_KEY_PATH -p $PORT $SSH_USER /bin/bash << EOF
-rm ./${REMOTE_ENV}_db_${START}.sql.gz
+    echo "Deleting prod db export on remote..."
+    ssh -i $SSH_KEY_PATH -p $PORT $SSH_USER /bin/bash << EOF
+    rm ./${REMOTE_ENV}_db_${START}.sql.gz
 EOF
 
-if [ $LOCAL_ENV = 'local' ]; then
-echo "Backing up the database..."
-wp db export ./_db.sql
-fi
+    if [ $LOCAL_ENV = 'local' ]; then
+        echo "Backing up the database..."
+        wp db export ./_db.sql
+    fi
 
-echo "Clearing the database..."
-wp db reset --yes
+    echo "Clearing the database..."
+    wp db reset --yes
 
-# fix for remote environments on mysql 8.0 with local environment on 5.7 (or MariaDB)
-if [[ $LOCAL_MYSQL_VER == "5.7" && $REMOTE_MYSQL_VER == "8.0" ]]; then
-    echo "Reformatting MySQL 8.0 db export for MySQL 5.7..."
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        # OSX
-        sed -i '' -e 's/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g' ${REMOTE_ENV}_db_${START}.sql
+    # fix for remote environments on mysql 8.0 with local environment on 5.7 (or MariaDB)
+    if [[ $LOCAL_MYSQL_VER == "5.7" && $REMOTE_MYSQL_VER == "8.0" ]]; then
+        echo "Reformatting MySQL 8.0 db export for MySQL 5.7..."
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            # OSX
+            sed -i '' -e 's/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g' ${REMOTE_ENV}_db_${START}.sql
+        else
+            # Linux
+            sed -i -e 's/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g' ${REMOTE_ENV}_db_${START}.sql
+        fi
+    fi
+
+    echo "Importing production database..."
+    wp db import ./${REMOTE_ENV}_db_${START}.sql
+
+    echo "Deleting prod db download..."
+    rm ./${REMOTE_ENV}_db_${START}.sql
+
+    if [[ -f "wp-env-sync/db-search-replace.sh" ]]; then
+        # This is here to support multi-site since our generic
+        # search-replace method doesn't work on multisite.
+        # A custom one will need to be written in this case
+        echo "found wp-env-sync/db-search-replace.sh, executing..."
+        bash ./wp-env-sync/db-search-replace.sh
     else
-        # Linux
-        sed -i -e 's/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g' ${REMOTE_ENV}_db_${START}.sql
+        echo "Running search-replace on url's..."
+        wp search-replace //$REMOTE_DOMAIN //$LOCAL_DOMAIN --all-tables  --skip-columns=guid --precise
+
+        echo "Running search-replace on files paths..."
+        wp search-replace $FULL_REMOTE_PATH $PWD --all-tables  --skip-columns=guid --precise
+
+        if [ $REMOTE_ENV_IS_HTTPS = true ] && [ $LOCAL_ENV_IS_HTTPS = false ]; then
+        # make sure all https domain references are changed to http
+        echo "Changing https references to http..."
+        wp search-replace https://$LOCAL_DOMAIN http://$LOCAL_DOMAIN --all-tables  --skip-columns=guid --precise
+        fi
     fi
-fi
-
-echo "Importing production database..."
-wp db import ./${REMOTE_ENV}_db_${START}.sql
-
-echo "Deleting prod db download..."
-rm ./${REMOTE_ENV}_db_${START}.sql
-
-if [[ -f "wp-env-sync/db-search-replace.sh" ]]; then
-    # This is here to support multi-site since our generic
-    # search-replace method doesn't work on multisite.
-    # A custom one will need to be written in this case
-    echo "found wp-env-sync/db-search-replace.sh, executing..."
-    bash ./wp-env-sync/sync-prod-ext.sh
-else
-    echo "Running search-replace on url's..."
-    wp search-replace //$REMOTE_DOMAIN //$LOCAL_DOMAIN --all-tables  --skip-columns=guid --precise
-
-    echo "Running search-replace on files paths..."
-    wp search-replace $FULL_REMOTE_PATH $PWD --all-tables  --skip-columns=guid --precise
-
-    if [ $REMOTE_ENV_IS_HTTPS = true ] && [ $LOCAL_ENV_IS_HTTPS = false ]; then
-    # make sure all https domain references are changed to http
-    echo "Changing https references to http..."
-    wp search-replace https://$LOCAL_DOMAIN http://$LOCAL_DOMAIN --all-tables  --skip-columns=guid --precise
-    fi
-fi
 
 fi # END db sync
 
-echo "flushing caches and rewrite rules..."
-wp cache flush
-wp rewrite flush
-rm -r ./wp-content/cache
+if [[ $IS_MULTISITE == 1 ]]; then
+    echo "flushing multisite caches and rewrite rules..."
+    wp site list --field=url | xargs -n1 -I % wp --url=% cache flush
+    wp site list --field=url | xargs -n1 -I % wp --url=% rewrite flush
+    rm -rf ./wp-content/cache
 
-echo "clearing transients..."
-wp transient delete --all
+    echo "clearing multisite transients..."
+    wp transient delete --all --network && wp site list --field=url | xargs -n1 -I % wp --url=% transient delete --all
 
-echo "discourage search engines from indexing..."
-wp option set blog_public 0
+    echo "discourage search engines from indexing multisite..."
+    wp site list --field=url | xargs -n1 -I % wp --url=% option update blog_public 0
+else
+    echo "flushing caches and rewrite rules..."
+    wp cache flush
+    wp rewrite flush
+    rm -rf ./wp-content/cache
+
+    echo "clearing transients..."
+    wp transient delete --all
+
+    echo "discourage search engines from indexing..."
+    wp option update blog_public 0
+fi # END is_multisite
 
 if [[ -f "wp-env-sync/sync-prod-ext-staging.sh" && $LOCAL_ENV == "staging" ]]; then
-echo "executing additional commands in sync-prod-ext-staging.sh..."
-bash ./wp-env-sync/sync-prod-ext-staging.sh
+    echo "executing additional commands in sync-prod-ext-staging.sh..."
+    bash ./wp-env-sync/sync-prod-ext-staging.sh
 fi
 
 if [[ -f "wp-env-sync/sync-prod-ext-local.sh" && $LOCAL_ENV == "local" ]]; then
-echo "executing additional commands in sync-prod-ext-local.sh..."
-bash ./wp-env-sync/sync-prod-ext-local.sh
+    echo "executing additional commands in sync-prod-ext-local.sh..."
+    bash ./wp-env-sync/sync-prod-ext-local.sh
 fi
 
 # backwards compatibility with older script versions
 if [[ -f "wp-env-sync/sync-prod-ext.sh" ]]; then
-echo "executing additional commands in sync-prod-ext.sh..."
-bash ./wp-env-sync/sync-prod-ext.sh
+    echo "executing additional commands in sync-prod-ext.sh..."
+    bash ./wp-env-sync/sync-prod-ext.sh
 fi
 
 END=$(date +%s)
@@ -321,9 +336,8 @@ DIFF=$(( $END - $START ))
 echo ""
 echo "Sync completed in $DIFF seconds"
 
-if [ $LOCAL_ENV = 'local' ]
-then
-echo ""
-echo "** If all went well, you can delete the _db.sql backup file. **"
-echo ""
+if [ $LOCAL_ENV = 'local' ]; then
+    echo ""
+    echo "** If all went well, you can delete the _db.sql backup file. **"
+    echo ""
 fi
