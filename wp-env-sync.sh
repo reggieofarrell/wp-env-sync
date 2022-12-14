@@ -163,54 +163,52 @@ fi
 
 if [[ $SLOW_MODE == "yes" ]]; then sleep 2; fi
 
+# multiline inline comment trick below from...
+# https://stackoverflow.com/questions/9522631/how-to-put-a-line-comment-for-a-multi-line-command/12797512#12797512
+
 if [[ $SKIP_RSYNC == "no" ]]; then
     echo "Syncing files from production..."
     rsync --progress --exclude-from="$RSYNC_EXCLUDES" \
-    # wp-env-sync
-    --exclude '/wp-env-sync/' \
-    --exclude '/wp-env-sync.sh' \
-    --exclude '/sync-prod.sh' \
-    --exclude '/sync-prod-ext.sh' \
-    --exclude '/sync-prod-ext-local.sh' \
-    --exclude '/sync-prod-ext-staging.sh' \
-    --exclude '/sync-stage.sh' \
-    --exclude '/sync-stage-ext.sh' \
-    --exclude '/rsync-excludes.txt' \
-    --exclude '/additional-rsync-excludes.txt' \
-    --exclude '/additional-rsync-excludes-local.txt' \
-    --exclude '/additional-rsync-excludes-staging.txt' \
-    --exclude '/additional-rsync-excludes-local-override.txt' \
-    # END wp-env-sync
-    # GitHub webhook deploys
-    --exclude '/deploy-scripts/' \
-    --exclude '/deployscripts/' \
-    --exclude '/gitdeploy.php' \
-    --exclude '/git-deploy.php' \
-    # END GitHub webhook deploys
-    # Nexcess Hosting
-    --exclude 'nexcess-mapps' \
-    --exclude 'nexcess-mapps.php' \
-    --exclude 'wp-content/fatal-error-handler.php' \
-    # END Nexcess Hosting
-    --exclude '/cache/' \
-    --exclude '/cgi-bin/' \
-    --exclude '/.htaccess' \
-    --exclude '/.htaccess~' \
-    --exclude '/.htpasswd' \
-    --exclude '/.well-known/' \
-    --exclude '/.git' \
-    --exclude '/.gitignore' \
-    --exclude '/.github' \
-    --exclude '/README.md' \
+    --exclude '/wp-env-sync/' ${comment# wp-env-sync} \
+    --exclude '/wp-env-sync.sh' ${comment# wp-env-sync} \
+    --exclude '/sync-prod.sh' ${comment# wp-env-sync} \
+    --exclude '/sync-prod-ext.sh' ${comment# wp-env-sync} \
+    --exclude '/sync-prod-ext-local.sh' ${comment# wp-env-sync} \
+    --exclude '/sync-prod-ext-staging.sh' ${comment# wp-env-sync} \
+    --exclude '/sync-stage.sh' ${comment# wp-env-sync} \
+    --exclude '/sync-stage-ext.sh' ${comment# wp-env-sync} \
+    --exclude '/rsync-excludes.txt' ${comment# wp-env-sync} \
+    --exclude '/additional-rsync-excludes.txt' ${comment# wp-env-sync} \
+    --exclude '/additional-rsync-excludes-local.txt' ${comment# wp-env-sync} \
+    --exclude '/additional-rsync-excludes-staging.txt' ${comment# wp-env-sync} \
+    --exclude '/additional-rsync-excludes-local-override.txt' ${comment# wp-env-sync} \
+    --exclude '/deploy-scripts/' ${comment# GitHub webhook deploys} \
+    --exclude '/deployscripts/' ${comment# GitHub webhook deploys} \
+    --exclude '/gitdeploy.php' ${comment# GitHub webhook deploys} \
+    --exclude '/git-deploy.php' ${comment# GitHub webhook deploys} \
+    --exclude 'nexcess-mapps' ${comment# Nexcess Hosting} \
+    --exclude 'nexcess-mapps.php' ${comment# Nexcess Hosting} \
+    --exclude 'wp-content/fatal-error-handler.php' ${comment# Nexcess Hosting} \
+    --exclude '/cache/' ${comment# general web hosting} \
+    --exclude '/cgi-bin/' ${comment# general web hosting} \
+    --exclude '/.htaccess' ${comment# general web hosting} \
+    --exclude '/.htaccess~' ${comment# general web hosting} \
+    --exclude '/.htpasswd' ${comment# general web hosting} \
+    --exclude '/.well-known/' ${comment# general web hosting} \
+    --exclude '/.git' ${comment# git} \
+    --exclude '/.gitignore' ${comment# git} \
+    --exclude '/.github' ${comment# git} \
+    --exclude '/README.md' ${comment# git} \
     --exclude '/robots.txt' \
-    --exclude 'wp-content/object-cache.php' \
-    --exclude 'wp-content/advanced-cache.php' \
-    --exclude 'wp-content/uploads/wp-migrate-db/' \
-    --exclude 'wp-content/db.php' \
-    --exclude 'wp-content/cache/' \
-    --exclude 'wp-content/et-cache/' \
-    --exclude 'ShortpixelBackups' \
-    --exclude 'wp-config.php' \
+    --exclude 'wp-content/object-cache.php' ${comment# wp} \
+    --exclude 'wp-content/advanced-cache.php' ${comment# wp} \
+    --exclude 'wp-content/db.php' ${comment# wp} \
+    --exclude 'wp-content/uploads/wp-migrate-db/' ${comment# wp} \
+    --exclude 'wp-content/db.php' ${comment# wp} \
+    --exclude 'wp-content/cache/' ${comment# wp} \
+    --exclude 'wp-config.php' ${comment# wp} \
+    --exclude 'wp-content/et-cache/' ${comment# Divi} \
+    --exclude 'ShortpixelBackups' ${comment# ShortPixel} \
     --exclude '*.log' \
     --exclude '/.env' \
     --exclude '/.env.development' \
