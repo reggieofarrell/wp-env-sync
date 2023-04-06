@@ -163,6 +163,9 @@ fi
 
 if [[ $SLOW_MODE == "yes" ]]; then sleep 2; fi
 
+echo "activating wp maintenance mode..."
+wp maintenance-mode activate
+
 # multiline inline comment trick below from...
 # https://stackoverflow.com/questions/9522631/how-to-put-a-line-comment-for-a-multi-line-command/12797512#12797512
 
@@ -339,6 +342,9 @@ if [[ -f "wp-env-sync/sync-prod-ext.sh" ]]; then
     echo "executing additional commands in sync-prod-ext.sh..."
     bash ./wp-env-sync/sync-prod-ext.sh
 fi
+
+echo "deactivating wp maintenance mode..."
+wp maintenance-mode deactivate
 
 END=$(date +%s)
 DIFF=$(( $END - $START ))
