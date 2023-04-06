@@ -278,6 +278,9 @@ EOF
     echo "Importing production database..."
     wp db import ./${REMOTE_ENV}_db_${START}.sql
 
+    echo "re-activating wp maintenance mode after database import..."
+    wp maintenance-mode activate
+
     echo "Deleting prod db download..."
     rm ./${REMOTE_ENV}_db_${START}.sql
 
