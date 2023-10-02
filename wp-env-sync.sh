@@ -189,6 +189,7 @@ if [[ $SKIP_RSYNC == "no" ]]; then
     --exclude '/deployscripts/' ${comment# GitHub webhook deploys} \
     --exclude '/gitdeploy.php' ${comment# GitHub webhook deploys} \
     --exclude '/git-deploy.php' ${comment# GitHub webhook deploys} \
+    --exclude '/local-xdebuginfo.php' ${comment# Local WP} \
     --exclude 'nexcess-mapps' ${comment# Nexcess Hosting} \
     --exclude 'nexcess-mapps.php' ${comment# Nexcess Hosting} \
     --exclude 'wp-content/fatal-error-handler.php' ${comment# Nexcess Hosting} \
