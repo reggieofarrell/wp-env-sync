@@ -222,6 +222,7 @@ if [[ $SKIP_RSYNC == "no" ]]; then
     --exclude '/composer.lock' \
     --exclude '/vendor' \
     --exclude '/wp-cli.yml' \
+    --exclude '.maintenance' \
     --delete --copy-links -avzhe "ssh -i $SSH_KEY_PATH -p $PORT" $SSH_USER:~/$REMOTE_PATH/ ./
 
     if [[ $SKIP_PERMS == "no" ]]; then
