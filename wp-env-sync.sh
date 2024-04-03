@@ -30,10 +30,10 @@
 #
 #
 
-# if [ -f ".env.wpenvsync" ]
-# then echo "Starting sync script..."
-# else echo "Error: .env.wpenvsync file not found, exiting..."; exit 1
-# fi
+if [ -f ".env.wpenvsync" ]
+then echo "Starting sync script..."
+else echo "Error: .env.wpenvsync file not found, exiting..."; exit 1
+fi
 
 START=$(date +%s)
 
@@ -239,7 +239,6 @@ fi # END File sync
 
 
 if [[ $SKIP_DB_SYNC == "no" ]]; then
-
     echo "Exporting and compressing DB on remote..."
     ssh -i $SSH_KEY_PATH $SSH_USER -p $PORT /bin/bash << EOF
     wp db export ${REMOTE_ENV}_db_${START}.sql --path=$REMOTE_PATH
@@ -259,6 +258,11 @@ EOF
     if [ $LOCAL_ENV = 'local' ]; then
         echo "Backing up the database..."
         wp db export ./_db.sql
+    fi
+
+    if [[ -f "wp-env-sync/before-db-import.sh" ]]; then
+        echo "found wp-env-sync/before-db-import.sh, executing..."
+        bash ./wp-env-sync/before-db-import.sh
     fi
 
     echo "Clearing the database..."

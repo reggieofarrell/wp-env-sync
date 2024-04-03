@@ -58,6 +58,23 @@ then run...
 
 `-s --slow` :: pauses 2 seconds after some commands to show output
 
+### __hooks__
+There are a few places in the main script where it will look for specifically named `.sh` or `.txt` files in the `wp-env-sync` directory and execute them or include them if found...
+
+#### `additional-rsync-excludes.txt`
+- [all environments] specify additional excludes for the file sync operation. See the rsync manual on `--exclude-from=FILE` for syntax
+#### `additional-rsync-excludes-staging.txt`
+- [staging only] specify additional excludes for the file sync operation. See the rsync manual on `--exclude-from=FILE` for syntax
+#### `additional-rsync-excludes-local.txt`
+- [local only] specify additional excludes for the file sync operation. See the rsync manual on `--exclude-from=FILE` for syntax
+#### `wp-env-sync-ext-staging.sh`
+- [staging only] script to be run at the end of the main `wp-env-sync` script
+#### `wp-env-sync-ext-local.sh`
+- [local only] script to be run at the end of the main `wp-env-sync` script
+#### `before-db-import.sh`
+- [all environments] script to be run just before the db is cleared and production is imported
+#### `db-search-replace.sh`
+- [all environments] script to be run instead of the standard db search-replace commands. useful for multisite where the standard commands don't do the trick
 
 ### __.env file variables__
 You should have a `.env.wpenvsync` file in the root of the wp project with all of these defined.  Values are just examples...
@@ -89,4 +106,6 @@ LOCAL_ENV=local
 LOCAL_MYSQL_VER=5.7
 # remote mysql version
 REMOTE_MYSQL_VER=8.0
+# LocalWP db socket path in case wp db commands are complaining about not being able to connect this can be used to execute mysql commands
+DB_SOCKET=
 ```
