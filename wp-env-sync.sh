@@ -264,6 +264,9 @@ EOF
     echo "Clearing the database..."
     wp db reset --yes
 
+    echo "Flushing object cache..."
+    wp cache flush
+
     # fix for remote environments on mysql 8.0 with local environment on 5.7 (or MariaDB)
     if [[ $LOCAL_MYSQL_VER == "5.7" && $REMOTE_MYSQL_VER == "8.0" ]]; then
         echo "Reformatting MySQL 8.0 db export for MySQL 5.7..."
@@ -309,7 +312,7 @@ fi # END db sync
 
 if [[ $IS_MULTISITE == 1 ]]; then
     echo "flushing multisite caches and rewrite rules..."
-    wp site list --field=url | xargs -n1 -I % wp --url=% cache flush
+    wp cache flush
     wp site list --field=url | xargs -n1 -I % wp --url=% rewrite flush
     rm -rf ./wp-content/cache
 
