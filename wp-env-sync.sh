@@ -266,11 +266,11 @@ EOF
         bash ./wp-env-sync/before-db-import.sh
     fi
 
-    echo "Clearing the database..."
-    wp db reset --yes
-
     echo "Flushing object cache..."
     wp cache flush
+
+    echo "Clearing the database..."
+    wp db reset --yes
 
     # fix for remote environments on mysql 8.0 with local environment on 5.7 (or MariaDB)
     if [[ $LOCAL_MYSQL_VER == "5.7" && $REMOTE_MYSQL_VER == "8.0" ]]; then
@@ -287,8 +287,10 @@ EOF
     echo "Importing production database..."
     wp db import ./${REMOTE_ENV}_db_${START}.sql
 
-    echo "re-activating wp maintenance mode after database import..."
-    wp maintenance-mode activate
+    if [[ ! -f ".maintenance" ]]; then
+        echo "re-activating wp maintenance mode after database import..."
+        wp maintenance-mode activate
+    fi
 
     echo "Deleting prod db download..."
     rm ./${REMOTE_ENV}_db_${START}.sql
