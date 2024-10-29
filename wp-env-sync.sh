@@ -242,7 +242,7 @@ fi # END File sync
 if [[ $SKIP_DB_SYNC == "no" ]]; then
     echo "Exporting and compressing DB on remote..."
     ssh -i $SSH_KEY_PATH $SSH_USER -p $PORT /bin/bash << EOF
-    wp db export ${REMOTE_ENV}_db_${START}.sql --path=$REMOTE_PATH
+    wp db export ${REMOTE_ENV}_db_${START}.sql --path=$REMOTE_PATH ${WP_DB_EXPORT_ARGS}
     gzip -v ${REMOTE_ENV}_db_${START}.sql
 EOF
 

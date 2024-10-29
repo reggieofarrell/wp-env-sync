@@ -102,10 +102,11 @@ FULL_REMOTE_PATH=/sites/example.com/files
 REMOTE_ENV=prod
 # local env being synced to ['local', 'staging']
 LOCAL_ENV=local
-# local mysql version (choose 5.7 if running MariaDB)
+# local mysql version
 LOCAL_MYSQL_VER=5.7
 # remote mysql version
 REMOTE_MYSQL_VER=8.0
-# LocalWP db socket path in case wp db commands are complaining about not being able to connect this can be used to execute mysql commands
-DB_SOCKET=
+# optional - additional options to pass to wp db export
+# https://developer.wordpress.org/cli/commands/db/export/
+WP_DB_EXPORT_ARGS=
 ```
