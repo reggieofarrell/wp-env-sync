@@ -4,7 +4,7 @@ This script syncs the files and database from the production site/server of a Wo
 It assumes a few things...
 
 1. You have ssh access between the local/staging and remote machines and they both have WP CLI installed globally
-2. You have added an additional-rsync-excludes.txt or (additional-rsync-excludes-staging.txt or additional-rsync-excludes-local.txt) file to reflect any files and/or folders that you don't want synced from the remote for this specific environment
+2. You may optionally add an additional-rsync-excludes.txt or (additional-rsync-excludes-staging.txt or additional-rsync-excludes-local.txt) file to reflect any files and/or folders that you don't want synced from the remote for this specific environment
 3. The .env.wpenvsync, and if applicable additional-rsync-excludes-local-override.txt, files are gitignored
 4. If using composer, your composer.json file is in the wp root
 
@@ -27,11 +27,11 @@ add these things to your composer.json file...
 "scripts": {
   "post-install-cmd": [
     "cp ./vendor/reggieofarrell/wp-env-sync/wp-env-sync.sh ./",
-    "if [ ! -f ./wp-env-sync/ ]; then cp -r ./vendor/reggieofarrell/wp-env-sync/wp-env-sync/ ./wp-env-sync; fi;"
+    "if [ ! -d ./wp-env-sync ]; then cp -r ./vendor/reggieofarrell/wp-env-sync/wp-env-sync/ ./wp-env-sync; fi;"
   ],
   "post-update-cmd": [
     "cp ./vendor/reggieofarrell/wp-env-sync/wp-env-sync.sh ./",
-    "if [ ! -f ./wp-env-sync/ ]; then cp -r ./vendor/reggieofarrell/wp-env-sync/wp-env-sync/ ./wp-env-sync; fi;"
+    "if [ ! -d ./wp-env-sync ]; then cp -r ./vendor/reggieofarrell/wp-env-sync/wp-env-sync/ ./wp-env-sync; fi;"
   ]
 }
 ```

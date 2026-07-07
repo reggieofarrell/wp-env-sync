@@ -8,8 +8,8 @@
 #
 # 1. You have WP CLI installed globally on this machine
 # 2. You have ssh access to the server and the server has WP CLI installed
-# 3. You have added an additional-rsync-excludes-local.txt or additional-rsync-excludes-staging.txt to the wp-env-sync directory
-#    file to reflect any files and/or folders that you don't want synced from the remote for this specific environment
+# 3. You may optionally add an additional-rsync-excludes-local.txt or additional-rsync-excludes-staging.txt to the wp-env-sync directory
+#    to reflect any files and/or folders that you don't want synced from the remote for this specific environment
 # 4. The .env.wpenvsync file and the additional-rsync-excludes-local.txt(if it exists) files files are gitignored
 #
 # Instructions:
@@ -137,7 +137,15 @@ if [[ -f "./additional-rsync-excludes-local-override.txt" && $LOCAL_ENV == "loca
     RSYNC_EXCLUDES="./additional-rsync-excludes-local-override.txt"
 fi
 
-echo "using additional rsync excludes from $RSYNC_EXCLUDES"
+# Only pass --exclude-from when a file exists; an empty value makes rsync fail with
+# "rsync: open: : No such file or directory"
+RSYNC_EXCLUDE_FROM_ARGS=()
+if [[ -n "$RSYNC_EXCLUDES" ]]; then
+    RSYNC_EXCLUDE_FROM_ARGS=(--exclude-from="$RSYNC_EXCLUDES")
+    echo "using additional rsync excludes from $RSYNC_EXCLUDES"
+else
+    echo "no additional rsync excludes file found, using built-in excludes only"
+fi
 
 if [[ $SLOW_MODE == "yes" ]]; then sleep 2; fi
 
@@ -171,7 +179,7 @@ wp maintenance-mode activate
 
 if [[ $SKIP_RSYNC == "no" ]]; then
     echo "Syncing files from production..."
-    rsync --progress --exclude-from="$RSYNC_EXCLUDES" \
+    rsync --progress "${RSYNC_EXCLUDE_FROM_ARGS[@]}" \
     --exclude '/wp-env-sync/' ${comment# wp-env-sync} \
     --exclude '/wp-env-sync.sh' ${comment# wp-env-sync} \
     --exclude '/sync-prod.sh' ${comment# wp-env-sync} \
