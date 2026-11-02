@@ -110,3 +110,32 @@ REMOTE_MYSQL_VER=8.0
 # https://developer.wordpress.org/cli/commands/db/export/
 WP_DB_EXPORT_ARGS=
 ```
+
+## Database lifecycle and failures (3.6.0)
+
+`before-db-import.sh` runs after downloading the export and before clearing the
+destination database. `after-db-import.sh` runs only after `wp db import` succeeds,
+before URL/path search-replace and ordinary post-sync extensions. Neither runs
+with `--no-db-sync`. Use these hooks for project-specific credential migration;
+wp-env-sync itself does not read or rotate plugin encryption keys.
+
+Hooks inherit the exported `.env.wpenvsync` settings. The runner additionally sets:
+
+- `WP_ENV_SYNC_DB_SYNC`: `yes` unless `--no-db-sync` was selected.
+- `WP_ENV_SYNC_DB_IMPORTED`: initially `no`, then `yes` after a successful import.
+
+All shell hooks run with `bash -eo pipefail`. The main script also stops on command
+or pipeline failures, including remote database export failures. The maintenance marker remains active beyond WordPress’s ordinary ten-minute
+expiry, including after failure or interruption, and maintenance is deactivated only when all operations finish successfully. On failure, inspect
+and repair the destination before manually deactivating maintenance; an import
+failure may leave a partially restored database. Existing hooks that intentionally
+ignore a failure must handle that case explicitly (for example, `if ...; then`).
+This applies to `db-search-replace.sh` and the existing `sync-prod-ext-*.sh`
+extensions as well. The ordinary post-sync extensions still run on file-only
+syncs; use the lifecycle markers if their work requires a new database.
+
+Test the lifecycle without any WordPress/database/network operations:
+
+```sh
+bash tests/database-hooks.sh
+```
