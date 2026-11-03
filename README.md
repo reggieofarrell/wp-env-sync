@@ -14,6 +14,50 @@ If you are migrating from v2.x to v3.x.  A few important breaking changes have b
 1. The main script has been renamed from `sync-prod.sh` to `wp-env-sync.sh`
 2. All other files aside from the main script and the `.env.wpenvsync` file now belong in a `wp-env-sync` folder which should be in the same location at the `wp-env-sync.sh` and `.env.wpenvsync` files... the Wordpress root directory
 
+## __Migration from 3.x__
+
+When upgrading from v3.x to v4.x, review existing hooks before updating each
+project. Version 4 changes failure handling in both the main script and hook
+processes, so a hook that completed under v3 may now stop the sync.
+
+### Command and hook failures
+
+The main script enables `set -e` and `pipefail`, and all shell hooks run with
+`bash -eo pipefail`. This includes existing `before-db-import.sh`,
+`db-search-replace.sh`, `sync-prod-ext-local.sh`, `sync-prod-ext-staging.sh`, and
+legacy `sync-prod-ext.sh` hooks, as well as the new `after-db-import.sh` hook.
+The remote database export shell also stops when export fails.
+
+- Unhandled command failures can stop a hook before its remaining commands run.
+- A failed command inside a pipeline can fail the pipeline even when its final
+  command succeeds.
+- A nonzero hook exit stops the main sync instead of allowing later operations
+  to continue.
+
+Review optional commands, standalone checks such as `grep` with no matches, and
+pipelines whose producers may exit early. Express expected conditions with `if`
+or explicitly handle their exit statuses. Bash's normal conditional exceptions
+to `-e` still apply; these options do not guarantee that every failure is caught.
+
+Completed operations are not automatically rolled back. A failed import may leave
+an incomplete destination database, and a later hook failure may occur after the
+new database has already been imported.
+
+### Maintenance and verification
+
+Maintenance uses WordPress's ordinary marker and normal ten-minute expiry.
+Successful runs explicitly deactivate maintenance. Failed or interrupted runs
+leave that standard marker to expire normally; v4 does not make maintenance
+persist indefinitely on local or staging destinations. Inspect the failure and
+the destination database before retrying a failed sync.
+
+The lifecycle tests use command fakes without connecting to WordPress, a database,
+or a remote server:
+
+```sh
+bash tests/database-hooks.sh
+```
+
 ## __Install (if using composer)__
 add these things to your composer.json file...
 
@@ -44,7 +88,7 @@ then run...
 2. In a `wp-env-sync` directory within the WP root directory...
    - Add any necessary additional rsync exclues not already in `wp-env-sync.sh` for this environment (typically files or folders for your WP project that are in version control) to a file named `additional-rsync-excludes.txt` or (`additional-rsync-excludes-staging.txt` or `additional-rsync-excludes-local.txt` if you need different excludes per environment) depending on the environment type
    - If you're running wp multisite, the default search-replace command that we run will not work properly. In this case you'll need to add your own `db-search-replace.sh` file in the `wp-env-sync` directory. If this file is detected, the commands in that file will be run instead of the default search-replace commands
-   - Add any additional shell commands to run at the end of the script to a file name `wp-env-sync-ext-local.sh` or`wp-env-sync-ext-staging.sh` depending on the environment type
+   - Add any additional shell commands to run at the end of the script to a file name `sync-prod-ext-local.sh` or `sync-prod-ext-staging.sh` depending on the environment type
 3. Run script (`bash wp-env-sync.sh`)
 4. You may want to create your own script that calls `wp-env-sync.sh` with the correct options for your use case already added.
 
@@ -59,21 +103,47 @@ then run...
 `-s --slow` :: pauses 2 seconds after some commands to show output
 
 ### __hooks__
+
 There are a few places in the main script where it will look for specifically named `.sh` or `.txt` files in the `wp-env-sync` directory and execute them or include them if found...
 
+Shell hooks inherit the exported `.env.wpenvsync` settings. The runner also exports:
+
+- `WP_ENV_SYNC_DB_SYNC`: `yes` unless `--no-db-sync` was selected.
+- `WP_ENV_SYNC_DB_IMPORTED`: initially `no`, then `yes` after import succeeds.
+
+Post-sync extensions still run on file-only syncs; use these flags when an
+extension requires a newly imported database.
+
 #### `additional-rsync-excludes.txt`
+
 - [all environments] specify additional excludes for the file sync operation. See the rsync manual on `--exclude-from=FILE` for syntax
+
 #### `additional-rsync-excludes-staging.txt`
+
 - [staging only] specify additional excludes for the file sync operation. See the rsync manual on `--exclude-from=FILE` for syntax
+
 #### `additional-rsync-excludes-local.txt`
+
 - [local only] specify additional excludes for the file sync operation. See the rsync manual on `--exclude-from=FILE` for syntax
-#### `wp-env-sync-ext-staging.sh`
+
+#### `sync-prod-ext-staging.sh`
+
 - [staging only] script to be run at the end of the main `wp-env-sync` script
-#### `wp-env-sync-ext-local.sh`
+
+#### `sync-prod-ext-local.sh`
+
 - [local only] script to be run at the end of the main `wp-env-sync` script
+
 #### `before-db-import.sh`
+
 - [all environments] script to be run just before the db is cleared and production is imported
+
+#### `after-db-import.sh`
+
+- [all environments, database sync only] runs after a successful database import and before URL/path search-replace or post-sync extensions. Skipped when the import fails or `--no-db-sync` is selected.
+
 #### `db-search-replace.sh`
+
 - [all environments] script to be run instead of the standard db search-replace commands. useful for multisite where the standard commands don't do the trick
 
 ### __.env file variables__
