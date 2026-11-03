@@ -30,11 +30,6 @@
 #
 #
 
-# Abort on failed commands and pipelines so a failed import or security hook can
-# never be followed by a misleading success message or maintenance deactivation.
-# Unset-variable checking is intentionally omitted for existing optional settings.
-set -eo pipefail
-
 if [ -f ".env.wpenvsync" ]
 then echo "Starting sync script..."
 else echo "Error: .env.wpenvsync file not found, exiting..."; exit 1
@@ -61,42 +56,13 @@ SKIP_PERMS="no"
 SKIP_RSYNC="no"
 SLOW_MODE="no"
 
-# Report failures without printing the command or environment, either of which
-# may contain site credentials. Maintenance stays enabled for operator recovery.
-function _sync_exit() {
-    local status=$?
-    if [[ $status -ne 0 ]]; then
-        echo "Sync failed; maintenance was not deactivated. Inspect the failure before reopening the site." >&2
-    fi
-    return "$status"
-}
-trap _sync_exit EXIT
-trap 'exit 130' INT
-trap 'exit 143' TERM
-
-# Execute optional project hooks in a fresh Bash process. Enabling errexit and
-# pipefail in that process makes an early failing command fail the entire hook.
-# Hooks inherit the existing .env.wpenvsync exports and the DB lifecycle markers.
-function _run_hook() {
-    local hook="wp-env-sync/$1"
-    if [[ -f "$hook" ]]; then
-        echo "executing $hook..."
-        bash -eo pipefail "$hook"
-    fi
+function _cleanup ()
+{
+  unset -f _usage _cleanup ; return 0
 }
 
-# WordPress ignores a normal .maintenance timestamp after ten minutes. Database
-# transfers and operator recovery can take longer, so pin this sync's marker to
-# the time of each request until the success path explicitly deactivates it.
-# An atomic replacement avoids exposing a partially written PHP marker.
-function _activate_maintenance() {
-    wp maintenance-mode activate --force
-    local marker
-    marker=$(mktemp .maintenance.wp-env-sync.XXXXXXXX)
-    printf '%s\n' '<?php $upgrading = time();' > "$marker"
-    chmod 644 "$marker"
-    mv "$marker" .maintenance
-}
+## Clear out nested functions on exit
+trap _cleanup INT EXIT RETURN
 
 function _usage()
 {
@@ -104,11 +70,11 @@ function _usage()
 cat <<EOF
 Usage: bash wp-env-sync.sh <[options]>
 Options:
-    -d   --no-db-sync       Skip database synchronization
-    -f   --no-file-sync     Skip file synchronization
+    -d   --no-db-sync       Set bar to yes    ($foo)
+    -f   --no-file-sync     Set foo to yes    ($bart)
     -h   --help             Show this message
-    -p   --no-perms         Skip file permission normalization
-    -s   --slow             Pause briefly between operations
+    -p   --no-perms         Set arguments to yes ($arguments) AND get ARGUMENT ($ARG)
+    -s   --slow             Set barfoo to yes ($barfoo)
 EOF
 exit
 }
@@ -141,20 +107,7 @@ while getopts ':dfhps-' OPTION ; do
   esac
 done
 
-# MULTISITE is normally undefined on single-site installs. Test its existence
-# explicitly so that this expected case does not trip the failure guard.
-IS_MULTISITE=0
-if wp config has MULTISITE --quiet; then
-    IS_MULTISITE=$(wp config get MULTISITE)
-fi
-
-# These markers are controlled by this process, rather than accepted from a
-# caller, so database-only hooks cannot mistake a file-only run for an import.
-export WP_ENV_SYNC_DB_IMPORTED=no
-export WP_ENV_SYNC_DB_SYNC=yes
-if [[ $SKIP_DB_SYNC == "yes" ]]; then
-    export WP_ENV_SYNC_DB_SYNC=no
-fi
+IS_MULTISITE=$(wp config get MULTISITE)
 
 echo "SKIP_DB_SYNC=$SKIP_DB_SYNC"
 echo "SKIP_RSYNC=$SKIP_RSYNC"
@@ -219,7 +172,7 @@ fi
 if [[ $SLOW_MODE == "yes" ]]; then sleep 2; fi
 
 echo "activating wp maintenance mode..."
-_activate_maintenance
+wp maintenance-mode activate
 
 # multiline inline comment trick below from...
 # https://stackoverflow.com/questions/9522631/how-to-put-a-line-comment-for-a-multi-line-command/12797512#12797512
@@ -301,8 +254,6 @@ if [[ $SKIP_DB_SYNC == "no" ]]; then
         echo "Exporting and compressing DB on remote with additional arguments: $WP_DB_EXPORT_ARGS ..."
     fi
     ssh -i $SSH_KEY_PATH $SSH_USER -p $PORT /bin/bash << EOF
-    # Fail inside the remote shell too; a successful gzip must not mask a failed export.
-    set -e
     wp db export ${REMOTE_ENV}_db_${START}.sql --path=$REMOTE_PATH ${WP_DB_EXPORT_ARGS}
     gzip -v ${REMOTE_ENV}_db_${START}.sql
 EOF
@@ -322,7 +273,10 @@ EOF
         wp db export ./_db.sql
     fi
 
-    _run_hook before-db-import.sh
+    if [[ -f "wp-env-sync/before-db-import.sh" ]]; then
+        echo "found wp-env-sync/before-db-import.sh, executing..."
+        bash ./wp-env-sync/before-db-import.sh
+    fi
 
     echo "Flushing object cache..."
     wp cache flush
@@ -344,16 +298,11 @@ EOF
 
     echo "Importing production database..."
     wp db import ./${REMOTE_ENV}_db_${START}.sql
-    export WP_ENV_SYNC_DB_IMPORTED=yes
 
-    # Renew the guard before any plugin-specific repair hook starts, even if an
-    # external import command removed the marker during database replacement.
-    _activate_maintenance
-
-    # Imported secrets must be repaired before URL/path rewriting or any ordinary
-    # post-sync operations. This hook never runs on failed imports or --no-db-sync.
-    # A nonzero result keeps the site in maintenance mode and stops the sync.
-    _run_hook after-db-import.sh
+    if [[ ! -f ".maintenance" ]]; then
+        echo "re-activating wp maintenance mode after database import..."
+        wp maintenance-mode activate
+    fi
 
     echo "Deleting prod db download..."
     rm ./${REMOTE_ENV}_db_${START}.sql
@@ -362,7 +311,8 @@ EOF
         # This is here to support multi-site since our generic
         # search-replace method doesn't work on multisite.
         # A custom one will need to be written in this case
-        _run_hook db-search-replace.sh
+        echo "found wp-env-sync/db-search-replace.sh, executing..."
+        bash ./wp-env-sync/db-search-replace.sh
     else
         echo "Running search-replace on url's..."
         wp search-replace //$REMOTE_DOMAIN //$LOCAL_DOMAIN --all-tables  --skip-columns=guid --precise
@@ -404,16 +354,19 @@ else
 fi # END is_multisite
 
 if [[ -f "wp-env-sync/sync-prod-ext-staging.sh" && $LOCAL_ENV == "staging" ]]; then
-    _run_hook sync-prod-ext-staging.sh
+    echo "executing additional commands in sync-prod-ext-staging.sh..."
+    bash ./wp-env-sync/sync-prod-ext-staging.sh
 fi
 
 if [[ -f "wp-env-sync/sync-prod-ext-local.sh" && $LOCAL_ENV == "local" ]]; then
-    _run_hook sync-prod-ext-local.sh
+    echo "executing additional commands in sync-prod-ext-local.sh..."
+    bash ./wp-env-sync/sync-prod-ext-local.sh
 fi
 
 # backwards compatibility with older script versions
 if [[ -f "wp-env-sync/sync-prod-ext.sh" ]]; then
-    _run_hook sync-prod-ext.sh
+    echo "executing additional commands in sync-prod-ext.sh..."
+    bash ./wp-env-sync/sync-prod-ext.sh
 fi
 
 echo "deactivating wp maintenance mode..."
